@@ -1,5 +1,6 @@
 #include "ft_ping.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 
 int error_handle(int errnum, char *err_value) {
@@ -21,9 +22,9 @@ void    check_input(int ac) {
         error_handle(EX_USAGE, NULL);
 }
 
-struct addrinfo    *host_lookup(char *raw_addr) {
+int    host_lookup(char *raw_addr, struct addrinfo **save_addrinfo) {
     struct  addrinfo hints = {0};
-    struct  addrinfo *dest = NULL;
+    int     rtn = 0;
 
     //// Build the hints for network address and service translation:
     // ai_socktype is equal to zero to accept addres of any type of sockets.
@@ -32,15 +33,15 @@ struct addrinfo    *host_lookup(char *raw_addr) {
     hints.ai_socktype = 0;
     hints.ai_protocol = IPPROTO_UDP;
     
-    if (getaddrinfo(raw_addr, NULL, &hints, &dest) == -1)
+    if ((rtn = getaddrinfo(raw_addr, NULL, &hints, save_addrinfo)) != EXIT_SUCCESS)
         error_handle(EX_NOHOST, raw_addr);
-    return dest;
+    return rtn;
 }
 
 int main(int ac, char *av[]) {
-    int     raw_sockfd = 0;
-    struct  addrinfo *dest = NULL;
-    //t_icmp  icmp = {0};
+    struct addrinfo *dest = {0};
+    int             raw_sockfd = 0;
+    t_icmp  icmp = {0};
 
     check_input(ac);
     //// Build the address:
@@ -49,5 +50,8 @@ int main(int ac, char *av[]) {
     // AF_INET for IPV4 type addr
     if ((raw_sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
         error_handle(0, "Failed to open socket [AF_INET, SOCK_RAW, IPPROTO_UDP]");
-    dest = host_lookup(av[1]);
+    host_lookup(av[1], &dest);
+    icmp.str_addr = inet_ntop();
+    dprintf(2, "TEST ADDR = %s\n", dest->ai_addr->sa_data);
+    freeaddrinfo(dest);
 }

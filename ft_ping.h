@@ -38,6 +38,7 @@ typedef struct  s_icmp {
     short               checksum;
     short               identifier;
     short               seq_nb;
+    char                *str_addr;
 }               t_icmp;
 
 
