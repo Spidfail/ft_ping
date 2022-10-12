@@ -2,7 +2,7 @@
 
 /// Create a checksum by adding 2 octets by 2 octets successively.
 /// For this reaser, buffer has to be casted in `uint16_t *`
-static uint16_t    calculate_checksum(uint16_t *buffer, size_t size) {
+uint16_t    calculate_checksum(const uint16_t *buffer, size_t size) {
     uint16_t    checksum = 0;
     
     for (size_t i = 0 ; i < size ; ++i, ++buffer)

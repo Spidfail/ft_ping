@@ -1,7 +1,6 @@
 
 #ifndef FT_PING_H /////////////////////////////////////////////////////////////
 # define FT_PING_H
-#include <netinet/in.h>
 #include <stddef.h>
 #include <sysexits.h>
 #include <stdlib.h>
@@ -11,12 +10,12 @@
 
 #include <signal.h>
 #include <sys/time.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
+
 #include <arpa/inet.h>
 #include <netdb.h>
-
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 // struct iphdr ip_hdr;
@@ -44,40 +43,40 @@ Apple specific options (to be specified before mcast-group or host like all opti
             --apple-connect       # call connect(2) in the socket \
             --apple-time          # display current time"
 
-typedef char*   t_packet;
-
-typedef struct  s_message {
+typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
     size_t              buffer_size;
-    struct iovec        *iov;
-    size_t              iov_len;
-}               t_message;
+    struct iovec        iov[1];
+}               t_recv_buff;
+
+typedef struct s_packet {
+    struct ip       ip_hdr;
+    struct icmphdr  icmp_hdr;
+    char            *data;
+}               t_packet;
 
 typedef struct  s_host {
     struct addrinfo     *addr_info;
     struct sockaddr_in  *addr_netbo;
     char                addr_str[30];
-    t_message           message;
 }               t_host;
 
 typedef struct  s_icmp {
     struct icmphdr  header;
     char            *data;
     size_t          data_size;
-    t_packet        packet;
-    size_t          packet_size;
+    char            *datagram;
+    size_t          datagram_size;
 }               t_icmp;
-
-bool    g_interrupt = false;
-bool    g_tick = false;
 
 // ICMP_DATAGRAM
 void        generate_data(char **data, size_t *size);
 void        fill_header(struct icmphdr *header, char *data, size_t data_size);
-void        create_packet(t_icmp *icmp_dtg);
+void        create_datagram(t_icmp *icmp_dtg);
 
 // ICMP_CHECKSUM
+uint16_t    calculate_checksum(const uint16_t *buffer, size_t size);
 uint16_t    calculate_checksum_icmp(struct icmphdr header, char *data, size_t size);
 
 // ERROR_HANDLING
@@ -85,6 +84,10 @@ int         error_handle(int errnum, char *err_value);
 
 // HOST
 void        host_lookup(char *raw_addr, t_host *host);
+
+// VERIFY
+int         verify_ip_header(const struct ip *reception);
+int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
 
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

@@ -1,7 +1,4 @@
 #include "ft_ping.h"
-#include "libft.h"
-#include <netinet/ip_icmp.h>
-#include <stddef.h>
 
 /// Allocate and fill the data pointer with the content of
 /// a `struct timeval` upon gettimeofday() call.
@@ -28,13 +25,13 @@ void        fill_header(struct icmphdr *header, char *data, size_t data_size) {
     header->checksum = calculate_checksum_icmp(*header, data, data_size);
 }
 
-void        create_packet(t_icmp *icmp_dtg) {
+void        create_datagram(t_icmp *icmp_dtg) {
     const short       header_size = sizeof(struct icmphdr);
-    t_packet          new_packet = NULL;
+    char              *new_datagram = NULL;
 
-    icmp_dtg->packet_size = header_size + icmp_dtg->data_size;
-    if ((new_packet = ft_calloc(1, icmp_dtg->packet_size)) == NULL)
-        error_handle(0, "Failed to allocate new packet");
-    ft_memcpy(new_packet, &icmp_dtg->header, header_size);
-    ft_memcpy(new_packet + header_size, icmp_dtg->data, icmp_dtg->data_size);
+    icmp_dtg->datagram_size = header_size + icmp_dtg->data_size;
+    if ((new_datagram = ft_calloc(1, icmp_dtg->datagram_size)) == NULL)
+        error_handle(0, "Failed to allocate new datagram");
+    ft_memcpy(new_datagram, &icmp_dtg->header, header_size);
+    ft_memcpy(new_datagram + header_size, icmp_dtg->data, icmp_dtg->data_size);
 }
