@@ -7,9 +7,13 @@ LIBFT_INC := libft.h
 
 CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR)
 LDFLAGS := -L$(LIBFT_DIR)  
-#LDLIBS := -lft
+LDLIBS := -lft
 
-SRCS := ft_ping.c
+SRCS := ft_ping.c \
+	icmp_datagram.c \
+	icmp_checksum.c \
+	error_handling.c \
+	host.c
 OBJS := $(SRCS:%.c=%.o)
 INC := $(LIBFT_DIR)/$(LIBFT_INC) ft_ping.h
 
