@@ -2,6 +2,7 @@
 #ifndef FT_PING_H /////////////////////////////////////////////////////////////
 # define FT_PING_H
 #include <stddef.h>
+#include <stdint.h>
 #include <sysexits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,12 +19,16 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-// struct iphdr ip_hdr;
-// struct icmphdr icmp_hdr;
+#include <errno.h>
+#include <error.h>
 
 #include "./libft_extended/libft.h"
 
 #define _INET_FAM AF_INET
+
+#define _IP_HDR_SIZE 20
+#define _ICMP_HDR_SIZE 8
+#define _PING_DATA_SIZE 56
 
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
@@ -53,13 +58,12 @@ typedef struct  s_recv_buff {
 typedef struct s_packet {
     struct ip       ip_hdr;
     struct icmphdr  icmp_hdr;
-    char            *data;
+    char            data[_PING_DATA_SIZE];
 }               t_packet;
 
 typedef struct  s_host {
     struct addrinfo     *addr_info;
-    struct sockaddr_in  *addr_netbo;
-    char                addr_str[30];
+    char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
 
 typedef struct  s_icmp {
@@ -68,16 +72,16 @@ typedef struct  s_icmp {
     size_t          data_size;
     char            *datagram;
     size_t          datagram_size;
+    t_packet        *packet;
+    size_t          packet_size;
+    uint16_t        seq_number;
 }               t_icmp;
 
-// ICMP_DATAGRAM
-void        generate_data(char **data, size_t *size);
-void        fill_header(struct icmphdr *header, char *data, size_t data_size);
-void        create_datagram(t_icmp *icmp_dtg);
+
 
 // ICMP_CHECKSUM
-uint16_t    calculate_checksum(const uint16_t *buffer, size_t size);
-uint16_t    calculate_checksum_icmp(struct icmphdr header, char *data, size_t size);
+uint16_t    calculate_checksum_icmp(struct icmphdr header, const char *data, size_t size);
+uint16_t    calculate_checksum(const char *buffer, size_t size);
 
 // ERROR_HANDLING
 int         error_handle(int errnum, char *err_value);
@@ -88,6 +92,12 @@ void        host_lookup(char *raw_addr, t_host *host);
 // VERIFY
 int         verify_ip_header(const struct ip *reception);
 int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
+
+// RECEIVE
+int    receive_data(int sockfd, t_icmp *echo_request);
+
+// ICMP_DATAGRAM
+void    generate_datagram(t_icmp *echo_request);
 
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

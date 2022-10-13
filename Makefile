@@ -5,8 +5,9 @@ LIBFT_BIN := libft.a
 LIBFT_DIR := libft_extended
 LIBFT_INC := libft.h
 
-CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR)
-LDFLAGS := -L$(LIBFT_DIR)  
+
+CFLAGS := -fsanitize=address -g3 -Wall -Wextra -Werror -I$(LIBFT_DIR) 
+LDFLAGS := -L$(LIBFT_DIR)  -fsanitize=address -g3
 LDLIBS := -lft
 
 SRCS := ft_ping.c \
@@ -14,6 +15,7 @@ SRCS := ft_ping.c \
 	icmp_checksum.c \
 	error_handling.c \
 	verify_header.c \
+	receive.c \
 	host.c
 OBJS := $(SRCS:%.c=%.o)
 INC := $(LIBFT_DIR)/$(LIBFT_INC) ft_ping.h
