@@ -9,6 +9,8 @@ bool    g_interrupt = false;
 bool    g_tick = true;
 bool    g_is_packet = false;
 
+t_global    g_data = {0};
+
 static void    check_input(int ac) {
     if (ac != 2)
         error_handle(EX_USAGE, NULL);
@@ -66,60 +68,12 @@ int     send_data(int sockfd, t_icmp *echo_request, t_host *dest) {
     return rtn;
 }
 
-void     print_packet(t_icmp *echo_request, t_host *dest) {
-    if (!g_is_packet)
-        return ;
-    char    addr_str[INET_ADDRSTRLEN];
-    
-    bzero(addr_str, INET_ADDRSTRLEN);
-    if (NULL == inet_ntop(_INET_FAM,
-            &echo_request->packet->ip_hdr.ip_src,
-            addr_str,
-            INET_ADDRSTRLEN)) {
-        dprintf(2, "ERROR NTOP\n");
-    }
-    //printf("%lu bytes from %s (%s): icmp_seq=%i ttl=%i time=%i.%i ms",
-    //        echo_request->received_size,
-    //        inet_ntop(_INET_FAM,
-    //            &echo_request->packet->ip_hdr.ip_src,
-    //            addr_str,
-    //            INET_ADDRSTRLEN)
-    //        );
-
-    struct icmphdr *icmphdr = &echo_request->packet->icmp_hdr;
-    printf("-------------Print Packet !----------------\n");
-    printf("type: %u\n", icmphdr->type);
-    printf("code: %u\n", icmphdr->code);
-    printf("checksum: %u\n", icmphdr->checksum);
-    printf("id: %u\n", icmphdr->un.echo.id);
-    printf("sequence: %u\n", icmphdr->un.echo.sequence);
-    for (size_t i = 0; i < 14; i++) {
-        printf("%x", *((unsigned int *)(echo_request->datagram + 8) + i));
-    }
-    printf("\n");
-    printf("%u\n", ~icmphdr->checksum & 0xffff);
-    printf("Host : %s\n", dest->addr_str);
-    printf("-------------------------------------------\n");
-}
-
-void     print_header_begin(const t_host *dest, const t_icmp *request) {
-    printf("PING %s (%s) %lu(%lu) bytes of data.\n",
-            dest->addr_info->ai_canonname,
-            dest->addr_str,
-            request->data_size,
-            request->packet_size);
-}
-
 int main(int ac, char *av[]) {
-    int             sockfd_raw = 0;
-    t_host          dest = {0};
-    t_icmp          echo_request = {0};
     struct timeval  timeout = {1, 0};
     int             broadcast = true;
     // Clear the buffer in case of garbage
 
-    ft_bzero(&dest, sizeof(t_host));
-    ft_bzero(&echo_request, sizeof(t_icmp));
+    ft_bzero(&g_data, sizeof(t_global));
 
     check_input(ac);
 
@@ -127,26 +81,26 @@ int main(int ac, char *av[]) {
     // Should use SOCK_RAW because ICMP is a protocol with
     // no user interface. So it need special options.
     // AF_INET for IPV4 type addr
-    if ((sockfd_raw = socket(_INET_FAM, SOCK_RAW, IPPROTO_ICMP)) == -1)
+    if ((g_data.sockfd = socket(_INET_FAM, SOCK_RAW, IPPROTO_ICMP)) == -1)
         error_handle(0, "Failed to open socket [AF_INET, SOCK_RAW, IPPROTO_ICMP]");
-    setsockopt(sockfd_raw, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(int));
-    setsockopt(sockfd_raw, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+    setsockopt(g_data.sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(int));
+    setsockopt(g_data.sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
     
-    init_data(&echo_request);
-    host_lookup(av[1], &dest);
+    init_data(&g_data.echo_request);
+    host_lookup(av[1], &g_data.dest_spec);
     
-    print_header_begin(&dest, &echo_request);
+    print_header_begin(&g_data.dest_spec, &g_data.echo_request);
 
     signal(SIGINT, signal_handler);
     signal(SIGALRM, signal_handler);
 
 
     while (true) {
-        if (send_data(sockfd_raw, &echo_request, &dest) == -1)
+        if (send_data(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec) == -1)
             dprintf(2, "----------!!!!!ERROR SENDING DATA\n");
 
 
-        if (receive_data(sockfd_raw, &echo_request) == EXIT_FAILURE) {
+        if (receive_data(g_data.sockfd, &g_data.echo_request) == EXIT_FAILURE) {
             if (errno == EWOULDBLOCK) {
                 dprintf(2, "----------!!!!!TIMEOUT\n");
                 g_is_packet = false;
@@ -157,13 +111,13 @@ int main(int ac, char *av[]) {
             g_is_packet = true;
         }
         while (!g_tick) { }
-        print_packet(&echo_request, &dest);
+        print_packet(&g_data.echo_request, &g_data.dest_spec);
         g_tick = false;
         alarm(1);
-        clean_data(&echo_request);
-        ++echo_request.seq_number;
+        clean_data(&g_data.echo_request);
+        ++g_data.echo_request.seq_number;
     }
 
-    freeaddrinfo(dest.addr_info);
-    free_data(&echo_request);
+    freeaddrinfo(g_data.dest_spec.addr_info);
+    free_data(&g_data.echo_request);
 }

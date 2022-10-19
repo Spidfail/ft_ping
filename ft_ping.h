@@ -1,6 +1,7 @@
 
 #ifndef FT_PING_H /////////////////////////////////////////////////////////////
 # define FT_PING_H
+#include <bits/types/struct_timeval.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sysexits.h>
@@ -78,7 +79,15 @@ typedef struct  s_icmp {
     uint16_t        seq_number;
 }               t_icmp;
 
+typedef struct  s_global_data {
+    t_icmp          echo_request;
+    t_host          dest_spec;
+    int             sockfd;
+}               t_global;
 
+
+/////////////////////// Global Variables
+extern t_global    g_data;
 
 // ICMP_CHECKSUM
 uint16_t    calculate_checksum_icmp(struct icmphdr header, const char *data, size_t size);
@@ -99,6 +108,10 @@ int    receive_data(int sockfd, t_icmp *echo_request);
 
 // ICMP_DATAGRAM
 void    generate_datagram(t_icmp *echo_request);
+
+// PRINT
+void     print_packet(t_icmp *echo_request, t_host *dest);
+void     print_header_begin(const t_host *dest, const t_icmp *request);
 
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////
