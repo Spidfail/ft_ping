@@ -13,10 +13,12 @@ void    host_lookup(char *raw_addr, t_host *host) {
     
     if (getaddrinfo(raw_addr, NULL, &hints, &host->addr_info) != EXIT_SUCCESS)
         error_handle(EX_NOHOST, raw_addr);
+    
+    dprintf(2, "################# CANONNAME = %s\n", host->addr_info->ai_canonname);
     // Get us the strange equivalent in `struct sockaddr_in`, only to have access
     // in an easier way of a `struct in_addr` format.
-    if (inet_ntop(_INET_FAM, &((struct sockaddr_in *)host->addr_info->ai_addr)->sin_addr,
-        host->addr_str, INET_ADDRSTRLEN) == NULL)
+    if (inet_ntop(_INET_FAM,
+            &((struct sockaddr_in *)host->addr_info->ai_addr)->sin_addr,
+            host->addr_str, INET_ADDRSTRLEN) == NULL)
         error_handle(EX_NOHOST, raw_addr);
-    dprintf (2, "CHECK HOST LOOKUP : len=%u | print = %s\n", host->addr_info->ai_addrlen, host->addr_str);
 }

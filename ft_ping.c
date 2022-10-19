@@ -2,6 +2,7 @@
 #include "libft.h"
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
+#include <netdb.h>
 #include <sys/socket.h>
 
 bool    g_interrupt = false;
@@ -43,6 +44,8 @@ void    clean_data(t_icmp *echo_request) {
     ft_bzero(echo_request->datagram, echo_request->datagram_size);
     ft_bzero(echo_request->packet, echo_request->packet_size);
     ft_bzero(&echo_request->header, sizeof(echo_request->header));
+    // Important to avoid errors because of expired informations
+    echo_request->received_size = 0;
 }
 
 void    free_data(t_icmp *echo_request) {
@@ -60,16 +63,28 @@ int     send_data(int sockfd, t_icmp *echo_request, t_host *dest) {
                  0, dest->addr_info->ai_addr, dest->addr_info->ai_addrlen);
     if (rtn == -1)
         return -1;
-
-    dprintf(2, "CONTROL SEND --> CHECKSUM = %u | TYPE = %u\n",
-            echo_request->header.checksum, echo_request->header.type);
-
     return rtn;
 }
 
 void     print_packet(t_icmp *echo_request, t_host *dest) {
     if (!g_is_packet)
         return ;
+    char    addr_str[INET_ADDRSTRLEN];
+    
+    bzero(addr_str, INET_ADDRSTRLEN);
+    if (NULL == inet_ntop(_INET_FAM,
+            &echo_request->packet->ip_hdr.ip_src,
+            addr_str,
+            INET_ADDRSTRLEN)) {
+        dprintf(2, "ERROR NTOP\n");
+    }
+    //printf("%lu bytes from %s (%s): icmp_seq=%i ttl=%i time=%i.%i ms",
+    //        echo_request->received_size,
+    //        inet_ntop(_INET_FAM,
+    //            &echo_request->packet->ip_hdr.ip_src,
+    //            addr_str,
+    //            INET_ADDRSTRLEN)
+    //        );
 
     struct icmphdr *icmphdr = &echo_request->packet->icmp_hdr;
     printf("-------------Print Packet !----------------\n");
@@ -87,10 +102,18 @@ void     print_packet(t_icmp *echo_request, t_host *dest) {
     printf("-------------------------------------------\n");
 }
 
+void     print_header_begin(const t_host *dest, const t_icmp *request) {
+    printf("PING %s (%s) %lu(%lu) bytes of data.\n",
+            dest->addr_info->ai_canonname,
+            dest->addr_str,
+            request->data_size,
+            request->packet_size);
+}
+
 int main(int ac, char *av[]) {
     int             sockfd_raw = 0;
-    t_host          dest;
-    t_icmp          echo_request;
+    t_host          dest = {0};
+    t_icmp          echo_request = {0};
     struct timeval  timeout = {1, 0};
     int             broadcast = true;
     // Clear the buffer in case of garbage
@@ -111,14 +134,18 @@ int main(int ac, char *av[]) {
     
     init_data(&echo_request);
     host_lookup(av[1], &dest);
+    
+    print_header_begin(&dest, &echo_request);
 
     signal(SIGINT, signal_handler);
     signal(SIGALRM, signal_handler);
 
+
     while (true) {
         if (send_data(sockfd_raw, &echo_request, &dest) == -1)
             dprintf(2, "----------!!!!!ERROR SENDING DATA\n");
-    dprintf(2, " HERRREEEE ?????\n");
+
+
         if (receive_data(sockfd_raw, &echo_request) == EXIT_FAILURE) {
             if (errno == EWOULDBLOCK) {
                 dprintf(2, "----------!!!!!TIMEOUT\n");
@@ -126,8 +153,9 @@ int main(int ac, char *av[]) {
             }
             else
                 dprintf(2, "----------!!!!!ERROR RECEIVING DATA\n");
-        } else
+        } else {
             g_is_packet = true;
+        }
         while (!g_tick) { }
         print_packet(&echo_request, &dest);
         g_tick = false;

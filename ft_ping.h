@@ -74,6 +74,7 @@ typedef struct  s_icmp {
     size_t          datagram_size;
     t_packet        *packet;
     size_t          packet_size;
+    ssize_t         received_size;
     uint16_t        seq_number;
 }               t_icmp;
 

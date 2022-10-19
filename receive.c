@@ -3,18 +3,23 @@
 int    receive_data(int sockfd, t_icmp *echo_request) {
     struct msghdr       header;
     struct iovec        iov[1];
-    ssize_t             rtn = 0;
-
+    char                name_buff[100];
+    
+    bzero(&name_buff, 100);
+    bzero(&header, sizeof(struct msghdr));
+    bzero(iov, sizeof(struct iovec));
     if (echo_request->packet == NULL)
         error_handle(0, "Error : recv_buffer not set !");
     iov[0].iov_len = echo_request->packet_size;
     iov[0].iov_base = echo_request->packet;
     header.msg_iovlen = 1;
     header.msg_iov = iov;
+    header.msg_name = name_buff;
+    header.msg_namelen = 100;
 
-    rtn = recvmsg(sockfd, &header, 0);
-    dprintf(2, "RECVMSG = %lu\n", rtn);
-    if (rtn == -1)
+    // Important for printing inforomations and record errors
+    echo_request->received_size = recvmsg(sockfd, &header, 0);
+    if (echo_request->received_size == -1)
         return EXIT_FAILURE;
 
     // Store the message in a proper packet struct
