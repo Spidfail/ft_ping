@@ -1,6 +1,4 @@
 #include "ft_ping.h"
-#include <netdb.h>
-#include <netinet/in.h>
 
 void    host_lookup(char *raw_addr, t_host *host) {
     struct  addrinfo hints = {0};

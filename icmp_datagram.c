@@ -1,5 +1,4 @@
 #include "ft_ping.h"
-#include <bits/types/struct_timeval.h>
 
 /// Allocate and fill the data pointer with the content of
 /// a `struct timeval` upon gettimeofday() call.
@@ -29,9 +28,20 @@ static void        fill_datagram(t_icmp *icmp_dtg) {
     ft_memcpy(icmp_dtg->datagram + _ICMP_HDR_SIZE, icmp_dtg->data, icmp_dtg->data_size);
 }
 
-void    generate_datagram(t_icmp *echo_request) {
+static void    generate_datagram(t_icmp *echo_request, const t_sum *session) {
     generate_data(&echo_request->data);
     fill_header(&echo_request->header, echo_request->data, echo_request->data_size,
-                echo_request->seq_number);
+                session->seq_number);
     fill_datagram(echo_request);
+}
+
+int     send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session) {
+    ssize_t         rtn = 0;
+
+    generate_datagram(echo_request, session);
+    rtn = sendto(sockfd, echo_request->datagram, echo_request->datagram_size,
+                 0, dest->addr_info->ai_addr, dest->addr_info->ai_addrlen);
+    if (rtn == -1)
+        return -1;
+    return rtn;
 }

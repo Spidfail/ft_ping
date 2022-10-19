@@ -17,6 +17,8 @@ SRCS := ft_ping.c \
 	verify_header.c \
 	receive.c \
 	print.c \
+	data.c \
+	signal_handler.c \
 	host.c
 OBJS := $(SRCS:%.c=%.o)
 INC := $(LIBFT_DIR)/$(LIBFT_INC) ft_ping.h

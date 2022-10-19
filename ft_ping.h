@@ -76,12 +76,20 @@ typedef struct  s_icmp {
     t_packet        *packet;
     size_t          packet_size;
     ssize_t         received_size;
-    uint16_t        seq_number;
+    bool            is_packet;
 }               t_icmp;
+
+typedef struct  s_session_sum {
+    uint16_t        seq_number;
+    size_t          recv_number;
+    size_t          err_number;
+    struct timeval  start;
+}               t_sum;
 
 typedef struct  s_global_data {
     t_icmp          echo_request;
     t_host          dest_spec;
+    t_sum           session;
     int             sockfd;
 }               t_global;
 
@@ -104,14 +112,23 @@ int         verify_ip_header(const struct ip *reception);
 int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
 
 // RECEIVE
-int    receive_data(int sockfd, t_icmp *echo_request);
+int         receive_data(int sockfd, t_icmp *echo_request);
 
 // ICMP_DATAGRAM
-void    generate_datagram(t_icmp *echo_request);
+int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session);
 
 // PRINT
-void     print_packet(t_icmp *echo_request, t_host *dest);
-void     print_header_begin(const t_host *dest, const t_icmp *request);
+void        print_packet(t_icmp *echo_request, t_host *dest);
+void        print_header_begin(const t_host *dest, const t_icmp *request);
+void        print_sum(t_sum *sumup, t_host *dest);
 
+// DATA
+void        init_data(t_icmp *echo_request, t_sum *session);
+void        clean_data(t_icmp *echo_request);
+void        free_data(t_icmp *echo_request);
+
+// SIGNAL
+void        signal_handler(int sig);
+void        handle_tick();
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

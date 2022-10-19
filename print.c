@@ -41,3 +41,8 @@ void     print_header_begin(const t_host *dest, const t_icmp *request) {
             request->data_size,
             request->packet_size);
 }
+
+void            print_sum(t_sum *sumup, t_host *dest) {
+    (void)sumup;
+    (void)dest;
+}

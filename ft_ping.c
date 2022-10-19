@@ -1,13 +1,4 @@
 #include "ft_ping.h"
-#include "libft.h"
-#include <asm-generic/socket.h>
-#include <bits/types/struct_timeval.h>
-#include <netdb.h>
-#include <sys/socket.h>
-
-bool    g_interrupt = false;
-bool    g_tick = true;
-bool    g_is_packet = false;
 
 t_global    g_data = {0};
 
@@ -16,65 +7,13 @@ static void    check_input(int ac) {
         error_handle(EX_USAGE, NULL);
 }
 
-void            signal_handler(int sig) {
-    switch (sig) {
-        case SIGINT :
-            g_interrupt = true;
-        break;
-        case SIGALRM :
-            g_tick = true;
-        break;
-    }
-}
-
-void    init_data(t_icmp *echo_request) {
-    echo_request->data_size = _PING_DATA_SIZE;
-    echo_request->datagram_size = _ICMP_HDR_SIZE + echo_request->data_size;
-    echo_request->packet_size = _IP_HDR_SIZE + echo_request->datagram_size;
-    echo_request->seq_number = 1;
-    
-    echo_request->data = ft_calloc(1, echo_request->data_size);
-    echo_request->datagram = ft_calloc(1, echo_request->datagram_size);
-    echo_request->packet = ft_calloc(1, echo_request->packet_size);
-    if (!echo_request->data || !echo_request->datagram || !echo_request->packet)
-        error_handle(0, "Failed to allocate data");
-}
-
-void    clean_data(t_icmp *echo_request) {
-    // Make sure all buffers (especially the header) are cleared.
-    ft_bzero(echo_request->data, echo_request->data_size);
-    ft_bzero(echo_request->datagram, echo_request->datagram_size);
-    ft_bzero(echo_request->packet, echo_request->packet_size);
-    ft_bzero(&echo_request->header, sizeof(echo_request->header));
-    // Important to avoid errors because of expired informations
-    echo_request->received_size = 0;
-}
-
-void    free_data(t_icmp *echo_request) {
-    // Make sure all buffers (especially the header) are cleared.
-    free(echo_request->data);
-    free(echo_request->datagram);
-    free(echo_request->packet);
-}
-
-int     send_data(int sockfd, t_icmp *echo_request, t_host *dest) {
-    ssize_t         rtn = 0;
-
-    generate_datagram(echo_request);
-    rtn = sendto(sockfd, echo_request->datagram, echo_request->datagram_size,
-                 0, dest->addr_info->ai_addr, dest->addr_info->ai_addrlen);
-    if (rtn == -1)
-        return -1;
-    return rtn;
-}
-
 int main(int ac, char *av[]) {
-    struct timeval  timeout = {1, 0};
     int             broadcast = true;
+    bool            flood = false;
+    bool            is_first = true;
     // Clear the buffer in case of garbage
 
     ft_bzero(&g_data, sizeof(t_global));
-
     check_input(ac);
 
     //// Build the address:
@@ -84,40 +23,26 @@ int main(int ac, char *av[]) {
     if ((g_data.sockfd = socket(_INET_FAM, SOCK_RAW, IPPROTO_ICMP)) == -1)
         error_handle(0, "Failed to open socket [AF_INET, SOCK_RAW, IPPROTO_ICMP]");
     setsockopt(g_data.sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(int));
-    setsockopt(g_data.sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
-    
-    init_data(&g_data.echo_request);
-    host_lookup(av[1], &g_data.dest_spec);
-    
-    print_header_begin(&g_data.dest_spec, &g_data.echo_request);
-
     signal(SIGINT, signal_handler);
     signal(SIGALRM, signal_handler);
 
-
+    init_data(&g_data.echo_request, &g_data.session);
+    host_lookup(av[1], &g_data.dest_spec);
+    print_header_begin(&g_data.dest_spec, &g_data.echo_request);
+    if (send_new_packet(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec, &g_data.session) == -1)
+        error_handle(0, "Error while sending data");
     while (true) {
-        if (send_data(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec) == -1)
-            dprintf(2, "----------!!!!!ERROR SENDING DATA\n");
-
-
         if (receive_data(g_data.sockfd, &g_data.echo_request) == EXIT_FAILURE) {
-            if (errno == EWOULDBLOCK) {
-                dprintf(2, "----------!!!!!TIMEOUT\n");
-                g_is_packet = false;
-            }
-            else
-                dprintf(2, "----------!!!!!ERROR RECEIVING DATA\n");
+            dprintf(2, "----------!!!!!ERROR RECEIVING DATA\n");
         } else {
-            g_is_packet = true;
+            g_data.echo_request.is_packet = true;
         }
-        while (!g_tick) { }
-        print_packet(&g_data.echo_request, &g_data.dest_spec);
-        g_tick = false;
-        alarm(1);
-        clean_data(&g_data.echo_request);
-        ++g_data.echo_request.seq_number;
+        if (is_first || flood) {
+            handle_tick();
+            if (is_first) {
+                is_first = false;
+                alarm(1);
+            }
+        }
     }
-
-    freeaddrinfo(g_data.dest_spec.addr_info);
-    free_data(&g_data.echo_request);
 }
