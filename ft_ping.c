@@ -1,4 +1,5 @@
 #include "ft_ping.h"
+#include <sys/time.h>
 
 t_global    g_data = {0};
 
@@ -29,6 +30,8 @@ int main(int ac, char *av[]) {
     init_data(&g_data.echo_request, &g_data.session);
     host_lookup(av[1], &g_data.dest_spec);
     print_header_begin(&g_data.dest_spec, &g_data.echo_request);
+    if (gettimeofday(&g_data.session.start, NULL) == -1)
+        error_handle(0, "Error while gettin' time");
     if (send_new_packet(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec, &g_data.session) == -1)
         error_handle(0, "Error while sending data");
     while (true) {

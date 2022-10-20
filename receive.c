@@ -21,6 +21,8 @@ int    receive_data(int sockfd, t_icmp *echo_request) {
     echo_request->received_size = recvmsg(sockfd, &header, 0);
     if (echo_request->received_size == -1)
         return EXIT_FAILURE;
+    if (gettimeofday(&echo_request->received_time, NULL) == -1)
+        error_handle(0, "Failed to get time");
 
     // Store the message in a proper packet struct
     ft_memcpy(echo_request->packet, header.msg_iov->iov_base, header.msg_iov->iov_len);

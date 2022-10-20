@@ -1,5 +1,4 @@
 #include "ft_ping.h"
-#include <sys/socket.h>
 
 static void     interrupt() {
     freeaddrinfo(g_data.dest_spec.addr_info);
@@ -8,14 +7,18 @@ static void     interrupt() {
 }
 
 void            handle_tick() {
-    print_packet(&g_data.echo_request, &g_data.dest_spec);
-    clean_data(&g_data.echo_request);
+    if (g_data.echo_request.is_packet) {
+        print_packet(&g_data.echo_request);
+        clean_data(&g_data.echo_request);
+        ++g_data.session.recv_number;
+    }
+    else {
+        // TODO
+    }
     ++g_data.session.seq_number;
-    if (send_new_packet(g_data.sockfd,
-            &g_data.echo_request,
-            &g_data.dest_spec,
-            &g_data.session) == -1)
-      error_handle(0, "Error while sending packet");
+    if (send_new_packet(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec,
+                        &g_data.session) == -1)
+        error_handle(0, "Error while sending packet");
 }
 
 void            signal_handler(int sig) {
