@@ -1,9 +1,9 @@
 #include "ft_ping.h"
-#include <sys/time.h>
 
 void    init_data(t_icmp *echo_request, t_sum *session) {
     session->seq_number = 1;
-    gettimeofday(&session->start, NULL);
+    session->time_min = DBL_MAX;
+    session->time_max = DBL_MIN;
 
     echo_request->data_size = _PING_DATA_SIZE;
     echo_request->datagram_size = _ICMP_HDR_SIZE + echo_request->data_size;

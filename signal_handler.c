@@ -7,17 +7,20 @@ static void     interrupt() {
 }
 
 void            handle_tick() {
-    if (g_data.echo_request.is_packet) {
-        print_packet(&g_data.echo_request);
-        clean_data(&g_data.echo_request);
-        ++g_data.session.recv_number;
-    }
+    if (g_data.echo_request.is_packet
+        && g_data.echo_request.packet->icmp_hdr.type == ICMP_ECHOREPLY)
+        print_packet(&g_data.echo_request, &g_data.session);
     else {
-        // TODO
+        print_packet_error(&g_data.echo_request,
+            g_data.echo_request.packet->icmp_hdr.type,
+            g_data.echo_request.packet->icmp_hdr.code);
     }
+    clean_data(&g_data.echo_request);
     ++g_data.session.seq_number;
-    if (send_new_packet(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec,
-                        &g_data.session) == -1)
+    if (send_new_packet(g_data.sockfd,
+            &g_data.echo_request,
+            &g_data.dest_spec,
+            &g_data.session) == -1)
         error_handle(0, "Error while sending packet");
 }
 

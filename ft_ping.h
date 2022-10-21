@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <float.h>
 
 #include <signal.h>
 #include <sys/time.h>
@@ -36,6 +37,7 @@
 #define _IP_HDR_SIZE 20
 #define _ICMP_HDR_SIZE 8
 #define _PING_DATA_SIZE 56
+#define _MAX_OPT_NB 14
 
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
@@ -57,7 +59,7 @@ Apple specific options (to be specified before mcast-group or host like all opti
 
 /////////////////////// Macros
 #define __PRINT_PACKET(recv_size, ip_addr, seq, ttl, ms) \
-    printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%lu ms\n", \
+    printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%f ms\n", \
     recv_size, ip_addr, seq, ttl, ms); \
 
 #define __PRINT_HEADER_BEG(name_can, name_ip, data_size, packet_size) \
@@ -68,9 +70,14 @@ Apple specific options (to be specified before mcast-group or host like all opti
     write(1, "\n", 1); \
     printf("--- %s ping statistics ---\n%i pachets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
-        printf("+%lu errors", nb_errors); \
-    printf("%lu%% packet loss, time %lims\n", (((nb_sent - nb_recv) / nb_sent) * 100), overall_time); \
+        printf("+%lu errors, ", nb_errors); \
+    printf("%lu%% packet loss, time %fms\n", (((nb_sent - nb_recv) / nb_sent) * 100), overall_time); \
+    
+#define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
+    printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
 
+
+/////////////////////// Structs
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -98,7 +105,6 @@ typedef struct  s_icmp {
     t_packet        *packet;
     size_t          packet_size;
     ssize_t         received_size;
-    struct timeval  received_time;
     bool            is_packet;
 }               t_icmp;
 
@@ -106,7 +112,12 @@ typedef struct  s_session_sum {
     uint16_t        seq_number;
     size_t          recv_number;
     size_t          err_number;
-    struct timeval  start;
+    double          time_delta;
+    double          time_min;
+    double          time_max;
+    double          time_enlapsed;
+    struct timeval  time_end;
+    struct timeval  time_start;
 }               t_sum;
 
 typedef struct  s_global_data {
@@ -114,7 +125,9 @@ typedef struct  s_global_data {
     t_host          dest_spec;
     t_sum           session;
     int             sockfd;
+    bool            opt[14];
 }               t_global;
+
 
     
 /////////////////////// Global Variables
@@ -126,6 +139,7 @@ uint16_t    calculate_checksum(const char *buffer, size_t size);
 
 // ERROR_HANDLING
 int         error_handle(int errnum, char *err_value);
+void        error_gai_handle(char *input, int8_t ec);
 
 // HOST
 void        host_lookup(char *raw_addr, t_host *host);
@@ -135,16 +149,16 @@ int         verify_ip_header(const struct ip *reception);
 int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
 
 // RECEIVE
-int         receive_data(int sockfd, t_icmp *echo_request);
+int         receive_data(int sockfd, t_icmp *echo_request, t_sum *session);
 
 // ICMP_DATAGRAM
 int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session);
 
 // PRINT
-void        print_packet(t_icmp *echo_request);
+void        print_packet(const t_icmp *echo_request, const t_sum *session);
+void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
 void        print_header_begin(const t_host *dest, const t_icmp *request);
 void        print_sum(t_sum *sumup, t_host *dest);
-ssize_t     get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
 
 // DATA
 void        init_data(t_icmp *echo_request, t_sum *session);
@@ -154,5 +168,9 @@ void        free_data(t_icmp *echo_request);
 // SIGNAL
 void        signal_handler(int sig);
 void        handle_tick();
+
+// TIME
+double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
+void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

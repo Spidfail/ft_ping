@@ -1,13 +1,13 @@
 #include "ft_ping.h"
 
-int    receive_data(int sockfd, t_icmp *echo_request) {
+int    receive_data(int sockfd, t_icmp *echo_request, t_sum *session) {
     struct msghdr       header;
     struct iovec        iov[1];
     char                name_buff[100];
     
-    bzero(&name_buff, 100);
     bzero(&header, sizeof(struct msghdr));
     bzero(iov, sizeof(struct iovec));
+    bzero(&name_buff, 100);
     if (echo_request->packet == NULL)
         error_handle(0, "Error : recv_buffer not set !");
     iov[0].iov_len = echo_request->packet_size;
@@ -17,19 +17,32 @@ int    receive_data(int sockfd, t_icmp *echo_request) {
     header.msg_name = name_buff;
     header.msg_namelen = 100;
 
-    // Important for printing inforomations and record errors
     echo_request->received_size = recvmsg(sockfd, &header, 0);
-    if (echo_request->received_size == -1)
+    //// Even if recvmsg() failed, we must save these data.
+    // Store the last time a packet arrived, used as the received_time
+    if (gettimeofday(&session->time_end, NULL) == -1)
+        error_handle(0, "Fatal: Failed to recover time");
+    // Update all values here instead of making calculations and attribution
+    // anywhere else. The total enlapsed time is calculating at the end.
+    update_time(session, (struct timeval *)echo_request->data, &session->time_end);
+    // Return the error before doing any copy or check
+    if (echo_request->received_size == -1) {
+        ++session->err_number;
         return EXIT_FAILURE;
-    if (gettimeofday(&echo_request->received_time, NULL) == -1)
-        error_handle(0, "Failed to get time");
+    }
 
     // Store the message in a proper packet struct
-    ft_memcpy(echo_request->packet, header.msg_iov->iov_base, header.msg_iov->iov_len);
-
-    if (verify_ip_header((struct ip *)echo_request->packet) == EXIT_FAILURE ||
-        verify_icmp_header(echo_request->packet, echo_request) == EXIT_FAILURE) {
-        dprintf(2, "!!!!!!!!!!!!! ERROR VERIFY !\n");
+    if (ft_memcpy(echo_request->packet, header.msg_iov->iov_base, header.msg_iov->iov_len) == NULL)
+        error_handle(0, "Fatal: memcpy failed");
+    // Verify checksum and ICMP header content
+    else if (verify_ip_header((struct ip *)echo_request->packet) == EXIT_FAILURE) {
+        ++session->err_number;
+        return EXIT_FAILURE;
     }
+    else if (verify_icmp_header(echo_request->packet, echo_request) == EXIT_FAILURE) {
+        ++session->err_number;
+        return EXIT_FAILURE;
+    }
+    ++session->recv_number;
     return EXIT_SUCCESS;
 }

@@ -13,3 +13,11 @@ int error_handle(int errnum, char *err_value) {
     }
     exit(errnum);
 }
+
+void    error_gai_handle(char *input, int8_t ec) {
+    // DEB11 version
+    fprintf(stderr, "ping: %s: %s\n", input, gai_strerror(ec));
+    // MACOS version
+    // fprintf(stderr, "ping: cannot resolve %s: %s\n", input, gai_strerror(ec));
+    exit(ec);
+}

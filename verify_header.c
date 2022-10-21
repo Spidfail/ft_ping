@@ -1,5 +1,4 @@
 #include "ft_ping.h"
-#include "libft.h"
 
 static int      verify_checksum(char *header, size_t header_size, unsigned short checksum) {
     if (header == NULL)
@@ -8,10 +7,11 @@ static int      verify_checksum(char *header, size_t header_size, unsigned short
 }
 
 int             verify_ip_header(const struct ip *reception) {
-    struct ip   tmp = *reception;
+    struct ip   tmp = {0};
 
     if (reception == NULL)
         return EXIT_FAILURE;
+    tmp = *reception;
     tmp.ip_sum = 0;
     return verify_checksum((char *)&tmp, _IP_HDR_SIZE, reception->ip_sum);
 }
@@ -19,6 +19,8 @@ int             verify_ip_header(const struct ip *reception) {
 int             verify_icmp_header(const t_packet *packet, const t_icmp *src) {
     struct icmphdr hdr_tmp = src->header;
 
+    if (packet == NULL || (packet->icmp_hdr.type != ICMP_ECHOREPLY && packet->icmp_hdr.code != 0))
+        return EXIT_FAILURE;
     hdr_tmp.type = 0;
     hdr_tmp.checksum = 0;
     hdr_tmp.checksum = calculate_checksum_icmp(hdr_tmp, src->data, src->data_size);
