@@ -37,25 +37,38 @@
 #define _IP_HDR_SIZE 20
 #define _ICMP_HDR_SIZE 8
 #define _PING_DATA_SIZE 56
-#define _MAX_OPT_NB 14
+
+#define _OPT_MAX_NB 15
+#define _OPT_ARG_MAX_NB 11
+#define _OPT_DATA_LEN _OPT_MAX_NB + _OPT_ARG_MAX_NB
 
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
-#define _ERROR_USAGE "ping [-AaDdfnoQqRrv] [-c count] [-G sweepmaxsize] \
-            [-g sweepminsize] [-h sweepincrsize] [-i wait] \
-            [-l preload] [-M mask | time] [-m ttl] [-p pattern] \
-            [-S src_addr] [-s packetsize] [-t timeout][-W waittime] \
-            [-z tos] host \
-       ping [-AaDdfLnoQqRrv] [-c count] [-I iface] [-i wait] \
-            [-l preload] [-M mask | time] [-m ttl] [-p pattern] [-S src_addr] \
-            [-s packetsize] [-T ttl] [-t timeout] [-W waittime] \
-            [-z tos] mcast-group \
-Apple specific options (to be specified before mcast-group or host like all options) \
-            -b boundif           # bind the socket to the interface \
-            -k traffic_class     # set traffic class socket option \
-            -K net_service_type  # set traffic class socket options \
-            --apple-connect       # call connect(2) in the socket \
-            --apple-time          # display current time"
+/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
+/// Only the first two are mandatory
+#define _ERROR_USAGE "Destination address required"
+#define _HEADER_USAGE "Usage\n\
+    ping [options] <destination>\n\n\
+Options:\n\
+    <destination>      dns name or ip address\n\
+    -h                 print help and exit\n\
+    -v                 verbose output\n\
+    -f                 flood ping\n\
+    -l <preload>       send <preload> number of packages while waiting replies\n\
+    -I <interface>     either interface name or address\n\
+    -m <mark>          tag the packets going out\n\
+    -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>\n\
+    -n                 no dns name resolution\n\
+    -w <deadline>      reply wait <deadline> in seconds\n\
+    -W <timeout>       time to wait for response\n\
+    -p <pattern>       contents of padding byte\n\
+    -Q <tclass>        use quality of service <tclass> bits\n\
+    -S <size>          use <size> as SO_SNDBUF socket option value\n\
+    -t <ttl>           define time to live\n\
+IPv4 options:\n\
+    -T <timestamp>     define timestamp, can be one of <tsonly|tsandaddr|tsprespec>\n\
+"
+
 
 /////////////////////// Macros
 #define __PRINT_PACKET(recv_size, ip_addr, seq, ttl, ms) \
@@ -77,7 +90,32 @@ Apple specific options (to be specified before mcast-group or host like all opti
     printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
 
 
+/////////////////////// Enum
+/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
+typedef enum    e_opt_list {
+    _OPT_H,
+    _OPT_V,
+    _OPT_F,
+    _OPT_l, // <arg>
+    _OPT_I, // <arg>
+    _OPT_m, // <arg>
+    _OPT_M, // <arg>
+    _OPT_n,
+    _OPT_w, // <arg>
+    _OPT_W, // <arg>
+    _OPT_p, // <arg>
+    _OPT_Q, // <arg>
+    _OPT_S, // <arg>
+    _OPT_t, // <arg>
+    _OPT_T, // <arg>
+}               t_opt_e;
+
 /////////////////////// Structs
+typedef struct  s_opt_data {
+    bool            opt[_OPT_MAX_NB + 1];
+    char            *opt_arg[_OPT_MAX_NB + 1];
+}               t_opt_d;
+
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -125,7 +163,7 @@ typedef struct  s_global_data {
     t_host          dest_spec;
     t_sum           session;
     int             sockfd;
-    bool            opt[14];
+    t_opt_d         opt;
 }               t_global;
 
 
@@ -172,5 +210,11 @@ void        handle_tick();
 // TIME
 double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
 void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
+
+// OPTIONS
+void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data);
+bool            get_opt(t_opt_e opt_value, t_opt_d *data);
+char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
+void            opt_init(int ac, char *av[], t_opt_d *data);
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

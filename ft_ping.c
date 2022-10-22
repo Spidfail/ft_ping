@@ -1,10 +1,20 @@
 #include "ft_ping.h"
+#include "libft.h"
 
 t_global    g_data = {0};
 
-static void    check_input(int ac) {
-    if (ac != 2)
+static bool     is_addr(char *addr) {
+    if (addr == NULL || addr[0] == '-')
+        return false;
+    return true;
+}
+
+static void    check_input(int ac, char *av[]) {
+    if (ac < 2 || !is_addr(av[1]))
         error_handle(EX_USAGE, NULL);
+    // Limit max : binary + targeted address + number of options + their arguments
+    else if (ac > 2 + _OPT_MAX_NB + _OPT_ARG_MAX_NB)
+        error_handle(EX_USAGE, _HEADER_USAGE);
 }
 
 int main(int ac, char *av[]) {
@@ -14,7 +24,8 @@ int main(int ac, char *av[]) {
     // Clear the buffer in case of garbage
 
     ft_bzero(&g_data, sizeof(t_global));
-    check_input(ac);
+    check_input(ac, av);
+    opt_init(ac, av, &g_data.opt);
 
     //// Build the address:
     // Should use SOCK_RAW because ICMP is a protocol with
