@@ -89,16 +89,16 @@ Which can be resumed by :
 
 `-t <value>` : Set the TTL value of the IP header. If the option is not provided the TTL is set to the system default, which can vary depending from one distribution to the other (Ex : between Debian or Manjaro / between Debian and Macos).
 
-`-T <timestamp>` : This is an interesting one. Since the time enlapsed printed by ping as default is the one between a ECHO_REQUEST and a ECHO_REPLY (**RTT**), this option will make the IP header timestamp be filled with local time then send the ECHO_REQUEST with it ; and the receiver is asked to do the same in return in his ECHO_REPLY packet.
-It means that with this option, the user can calculate the time that enlapsed between a sent ECHO_REQUEST (by local machine) and a received ECHO_REQUEST (by the targeted machine), in other words the time a ECHO_REQUEST makes between two hosts and not only the round trip time.
+`-T <timestamp>` : This is an interesting one. Since the time enlapsed printed by ping as default is the one between a ECHO_REQUEST and a ECHO_REPLY (**RTT**), this option will make the IP header timestamp be filled with local time then send the ECHO_REQUEST with it ; and the receiver is asked to do the same in return in his ECHO_REPLY packet.   
+It means that with this option, the user can calculate the time that enlapsed between a sent ECHO_REQUEST (by local machine) and a received ECHO_REQUEST (by the targeted machine), in other words ***the time a ECHO_REQUEST makes between two hosts and not only the round trip time***.   
 For a better explanation with a Wireshark example, check [this video](https://youtu.be/4EFEdAyxemk).
 
 For more details on socket options, check [here](https://man7.org/linux/man-pages/man7/socket.7.html).
 
 ## Lexique
 
-**I.P.** : _Internet Protocol_.
-**I.C.M.P.** : _Internet Message Control Protocol_.
-**UID** : _User Identifier_. Retrieved by the C function `getuid()`.
-**RTT** : _Round Trip Time_.
-**TTL** : _Time To Live_.
+**I.P.** : _Internet Protocol_.   
+**I.C.M.P.** : _Internet Message Control Protocol_.   
+**UID** : _User Identifier_. Retrieved by the C function `getuid()`.   
+**RTT** : _Round Trip Time_.   
+**TTL** : _Time To Live_.   
