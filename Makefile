@@ -21,7 +21,8 @@ SRCS := ft_ping.c \
 	signal_handler.c \
 	get_time.c \
 	host.c \
-	options.c
+	options.c \
+	socket.c
 OBJS := $(SRCS:%.c=%.o)
 INC := $(LIBFT_DIR)/$(LIBFT_INC) ft_ping.h
 

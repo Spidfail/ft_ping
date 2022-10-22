@@ -93,9 +93,9 @@ IPv4 options:\n\
 /////////////////////// Enum
 /// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
 typedef enum    e_opt_list {
-    _OPT_H,
-    _OPT_V,
-    _OPT_F,
+    _OPT_h,
+    _OPT_v,
+    _OPT_f,
     _OPT_l, // <arg>
     _OPT_I, // <arg>
     _OPT_m, // <arg>
@@ -201,7 +201,7 @@ void        print_sum(t_sum *sumup, t_host *dest);
 // DATA
 void        init_data(t_icmp *echo_request, t_sum *session);
 void        clean_data(t_icmp *echo_request);
-void        free_data(t_icmp *echo_request);
+void        free_data(t_icmp *echo_request, t_opt_d *opt_data);
 
 // SIGNAL
 void        signal_handler(int sig);
@@ -216,5 +216,8 @@ void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data);
 bool            get_opt(t_opt_e opt_value, t_opt_d *data);
 char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
 void            opt_init(int ac, char *av[], t_opt_d *data);
+
+// SOCKET
+void            socket_init(int *sockfd, t_opt_d *opt_data);
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

@@ -51,6 +51,8 @@ The Packet is _timed out_ and _returned_ by the relay if the TTL reach 0. It can
 
 Payload's data is composed of a **timestamp** (a `stuct timeval`, check [here](https://pubs.opengroup.org/onlinepubs/7908799/xsh/systime.h.html)), then **filled**. The user can give an arbitrary packet size with `-s` or choose a specific timestamp with `-T`.
 
+Note that the timestamp is not mandatory, the data can be filled with anything.
+
 
 ### Output
 
@@ -80,7 +82,18 @@ Which can be resumed by :
 - **Statistics** : little header, then
     - `<total nb>` transmitted, `<total received>` received, `<% of loss>` packet loss, time `<total time enlapsed>`
     - rtt min/avg/max/mdev = `<round trip time>`
+    
+## Options and Flags
 
+`-S <size>` : Set the limit of the socket send buffer in bytes. The minimum value is 2048 bytes and it triggeres errors if this is not correctly set, or if a packet is sent with a size that exceed the limit previously set.
+
+`-t <value>` : Set the TTL value of the IP header. If the option is not provided the TTL is set to the system default, which can vary depending from one distribution to the other (Ex : between Debian or Manjaro / between Debian and Macos).
+
+`-T <timestamp>` : This is an interesting one. Since the time enlapsed printed by ping as default is the one between a ECHO_REQUEST and a ECHO_REPLY (**RTT**), this option will make the IP header timestamp be filled with local time then send the ECHO_REQUEST with it ; and the receiver is asked to do the same in return in his ECHO_REPLY packet.
+It means that with this option, the user can calculate the time that enlapsed between a sent ECHO_REQUEST (by local machine) and a received ECHO_REQUEST (by the targeted machine), in other words the time a ECHO_REQUEST makes between two hosts and not only the round trip time.
+For a better explanation with a Wireshark example, check [this video](https://youtu.be/4EFEdAyxemk).
+
+For more details on socket options, check [here](https://man7.org/linux/man-pages/man7/socket.7.html).
 
 ## Lexique
 

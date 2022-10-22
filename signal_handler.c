@@ -2,7 +2,7 @@
 
 static void     interrupt() {
     freeaddrinfo(g_data.dest_spec.addr_info);
-    free_data(&g_data.echo_request);
+    free_data(&g_data.echo_request, &g_data.opt);
     exit(0);
 }
 

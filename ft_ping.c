@@ -18,7 +18,6 @@ static void    check_input(int ac, char *av[]) {
 }
 
 int main(int ac, char *av[]) {
-    int             broadcast = true;
     bool            flood = false;
     bool            is_first = true;
     // Clear the buffer in case of garbage
@@ -31,10 +30,7 @@ int main(int ac, char *av[]) {
     // Should use SOCK_RAW because ICMP is a protocol with
     // no user interface. So it need special options.
     // AF_INET for IPV4 type addr
-    if ((g_data.sockfd = socket(_INET_FAM, SOCK_RAW, IPPROTO_ICMP)) == -1)
-        error_handle(0, "Failed to open socket [AF_INET, SOCK_RAW, IPPROTO_ICMP]");
-    // Set option to 
-    setsockopt(g_data.sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(int));
+    socket_init(&g_data.sockfd, &g_data.opt);
 
     init_data(&g_data.echo_request, &g_data.session);
     host_lookup(av[1], &g_data.dest_spec);
