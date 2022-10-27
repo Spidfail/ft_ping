@@ -32,7 +32,8 @@ void            signal_handler(int sig) {
         break;
         case SIGALRM :
             handle_tick();
-            alarm(1);
+            if (!g_data.opt.opt[_OPT_f])
+                alarm(1);
         break;
     }
 }

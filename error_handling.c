@@ -11,8 +11,10 @@ int error_handle(int errnum, char *err_value) {
             else
                 fprintf(stderr, "%s usage error: %s\n", _ERROR_HEADER, _ERROR_USAGE);
             break;
+        case _EX_NOERRNO:
+            fprintf(stderr, "%s\n", err_value);
         default :
-            fprintf(stderr, "%s : %s", err_value, strerror(errno));
+            fprintf(stderr, "%s : %s\n", err_value, strerror(errno));
     }
     exit(errnum);
 }

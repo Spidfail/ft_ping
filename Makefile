@@ -6,7 +6,7 @@ LIBFT_DIR := libft_extended
 LIBFT_INC := libft.h
 
 
-CFLAGS := -fsanitize=address -g3 -Wall -Wextra -Werror -I$(LIBFT_DIR) 
+CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) #-fsanitize=address -g3 
 LDFLAGS := -L$(LIBFT_DIR)  -fsanitize=address -g3
 LDLIBS := -lft
 
@@ -22,7 +22,8 @@ SRCS := ft_ping.c \
 	get_time.c \
 	host.c \
 	options.c \
-	socket.c
+	socket.c \
+	loop.c
 OBJS := $(SRCS:%.c=%.o)
 INC := $(LIBFT_DIR)/$(LIBFT_INC) ft_ping.h
 

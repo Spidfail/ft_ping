@@ -42,6 +42,8 @@
 #define _OPT_ARG_MAX_NB 11
 #define _OPT_DATA_LEN _OPT_MAX_NB + _OPT_ARG_MAX_NB
 
+#define _EX_NOERRNO -1
+
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
 /// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
@@ -112,8 +114,13 @@ typedef enum    e_opt_list {
 
 /////////////////////// Structs
 typedef struct  s_opt_data {
-    bool            opt[_OPT_MAX_NB + 1];
-    char            *opt_arg[_OPT_MAX_NB + 1];
+    bool            opt[_OPT_MAX_NB];
+    char            *opt_arg[_OPT_MAX_NB];
+    struct timeval  timeout;
+    int             deadline;
+    ushort          preload;
+    int             ttl;
+    int             sndbuf;
 }               t_opt_d;
 
 typedef struct  s_recv_buff {
@@ -212,12 +219,18 @@ double      get_enlapsed_ms(const struct timeval *start, const struct timeval *e
 void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
 
 // OPTIONS
-void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data);
+void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data, int *addr_pos);
 bool            get_opt(t_opt_e opt_value, t_opt_d *data);
 char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
-void            opt_init(int ac, char *av[], t_opt_d *data);
+void            opt_init(int ac, char *av[], t_opt_d *data, int *addr_pos);
+void            opt_handle(t_opt_d *data);
 
 // SOCKET
 void            socket_init(int *sockfd, t_opt_d *opt_data);
+
+// LOOP
+void            loop_preload();
+void            loop_flood();
+void            loop_classic();
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////
