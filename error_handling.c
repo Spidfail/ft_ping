@@ -13,8 +13,9 @@ int error_handle(int errnum, char *err_value) {
             break;
         case _EX_NOERRNO:
             fprintf(stderr, "%s\n", err_value);
+            break;
         default :
-            fprintf(stderr, "%s : %s\n", err_value, strerror(errno));
+            fprintf(stderr, "%s %s: %s\n",_ERROR_HEADER, err_value, strerror(errno));
     }
     exit(errnum);
 }

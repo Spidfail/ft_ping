@@ -32,7 +32,10 @@ void    free_data(t_icmp *echo_request, t_opt_d *opt_data) {
     free(echo_request->data);
     free(echo_request->datagram);
     free(echo_request->packet);
-    for (int i = 0 ; i < _OPT_MAX_NB ; ++i)
-        if (opt_data->opt_arg[i])
+    for (int i = 0 ; i < _OPT_MAX_NB ; ++i) {
+        if (opt_data->opt_arg[i]) {
+            bzero(opt_data->opt_arg[i], ft_strlen(opt_data->opt_arg[i]));
             free(opt_data->opt_arg[i]);
+        }
+    }
 }

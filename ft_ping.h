@@ -15,7 +15,9 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -23,6 +25,7 @@
 #include <netinet/ip_icmp.h>
 #include <errno.h>
 #include <error.h>
+#include <ifaddrs.h>
 
 #include "./libft_extended/libft.h"
 
@@ -70,6 +73,9 @@ Options:\n\
 IPv4 options:\n\
     -T <timestamp>     define timestamp, can be one of <tsonly|tsandaddr|tsprespec>\n\
 "
+#define _ERROR_INTERFACE_SRCADDR "Warning: source address might be selected on device other than: "
+#define _ERROR_INTERFACE_IFACE "unknown iface: "
+#define _ERROR_INTERFACE_NOSUCHDEVICE "SO_BINDTODEVICE "
 
 
 /////////////////////// Macros
@@ -81,15 +87,29 @@ IPv4 options:\n\
     printf("PING %s (%s) %lu(%lu) bytes of data.\n", \
     name_can, name_ip, data_size, packet_size); \
 
+#define __PRINT_HEADER_BEG_IF(name_can, name_ip, data_size, packet_size, ip_local, interface) \
+    printf("PING %s (%s) from %s %s: %lu(%lu) bytes of data.\n", \
+    name_can, name_ip,  ip_local, interface, data_size, packet_size); \
+
 #define __PRINT_SUM(name_canon, nb_sent, nb_recv, nb_errors, overall_time) \
     write(1, "\n", 1); \
-    printf("--- %s ping statistics ---\n%i pachets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
+    printf("--- %s ping statistics ---\n%i packets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
         printf("+%lu errors, ", nb_errors); \
-    printf("%lu%% packet loss, time %fms\n", (((nb_sent - nb_recv) / nb_sent) * 100), overall_time); \
+    printf("%lu%% packet loss", ((nb_sent - nb_recv) / nb_sent) * 100); \
+    if (overall_time > 0) \
+        printf(", time %fms\n", overall_time); \
+    else \
+        printf("\n"); \
     
 #define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
     printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
+
+
+/////////////////////// Typedef
+
+typedef uint    ifa_flag_t;
+#define IFAFLAG_NULL 0
 
 
 /////////////////////// Enum
@@ -118,7 +138,6 @@ typedef struct  s_opt_data {
     char            *opt_arg[_OPT_MAX_NB];
     struct timeval  timeout;
     int             deadline;
-    ushort          preload;
     int             ttl;
     int             sndbuf;
 }               t_opt_d;
@@ -137,9 +156,22 @@ typedef struct s_packet {
 }               t_packet;
 
 typedef struct  s_host {
+    char                *addr_orig;
     struct addrinfo     *addr_info;
     char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
+
+typedef union   u_interfaces_id {
+    const char            *name_str;
+    struct sockaddr       *address;
+    struct sockaddr       *mask;
+}               t_ifid;
+
+typedef enum   e_interface_enum {
+    _IFE_NAME,
+    _IFE_ADDR,
+    _IFE_MASK
+}               t_ife;
 
 typedef struct  s_icmp {
     struct icmphdr  header;
@@ -187,7 +219,12 @@ int         error_handle(int errnum, char *err_value);
 void        error_gai_handle(char *input, int8_t ec);
 
 // HOST
-void        host_lookup(char *raw_addr, t_host *host);
+void        host_lookup(char *raw_addr, t_host *host, bool do_resolution);
+void        host_get_ip(struct sockaddr *addr_buff);
+
+// INTERFACE
+int         interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
+int         interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
 
 // VERIFY
 int         verify_ip_header(const struct ip *reception);
@@ -202,7 +239,7 @@ int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, cons
 // PRINT
 void        print_packet(const t_icmp *echo_request, const t_sum *session);
 void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
-void        print_header_begin(const t_host *dest, const t_icmp *request);
+void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_opt_d* const opt_data);
 void        print_sum(t_sum *sumup, t_host *dest);
 
 // DATA
@@ -210,9 +247,11 @@ void        init_data(t_icmp *echo_request, t_sum *session);
 void        clean_data(t_icmp *echo_request);
 void        free_data(t_icmp *echo_request, t_opt_d *opt_data);
 
-// SIGNAL
+// SIGNAL HANDLER
 void        signal_handler(int sig);
 void        handle_tick();
+void        new_load();
+void        interrupt(int exit_nb);
 
 // TIME
 double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
@@ -222,14 +261,12 @@ void        update_time(t_sum *session, const struct timeval *start, const struc
 void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data, int *addr_pos);
 bool            get_opt(t_opt_e opt_value, t_opt_d *data);
 char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
-void            opt_init(int ac, char *av[], t_opt_d *data, int *addr_pos);
 void            opt_handle(t_opt_d *data);
 
 // SOCKET
 void            socket_init(int *sockfd, t_opt_d *opt_data);
 
 // LOOP
-void            loop_preload();
 void            loop_flood();
 void            loop_classic();
 

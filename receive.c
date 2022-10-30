@@ -1,4 +1,7 @@
 #include "ft_ping.h"
+#include <asm-generic/errno-base.h>
+#include <stdlib.h>
+#include <string.h>
 
 int    receive_data(int sockfd, t_icmp *echo_request, t_sum *session) {
     struct msghdr       header;
@@ -22,14 +25,17 @@ int    receive_data(int sockfd, t_icmp *echo_request, t_sum *session) {
     // Store the last time a packet arrived, used as the received_time
     if (gettimeofday(&session->time_end, NULL) == -1)
         error_handle(0, "Fatal: Failed to recover time");
-    // Update all values here instead of making calculations and attribution
-    // anywhere else. The total enlapsed time is calculating at the end.
-    update_time(session, (struct timeval *)echo_request->data, &session->time_end);
-    // Return the error before doing any copy or check
     if (echo_request->received_size == -1) {
+        if (errno == EINTR)
+            return EXIT_SUCCESS;
+        update_time(session, (struct timeval *)echo_request->data,
+                    &session->time_end);
         ++session->err_number;
         return EXIT_FAILURE;
     }
+    // Update all values here instead of making calculations and attribution
+    // anywhere else. The total enlapsed time is calculating at the end.
+    update_time(session, (struct timeval *)echo_request->data, &session->time_end);
 
     // Store the message in a proper packet struct
     if (ft_memcpy(echo_request->packet, header.msg_iov->iov_base, header.msg_iov->iov_len) == NULL)

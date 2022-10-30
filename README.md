@@ -83,7 +83,9 @@ Which can be resumed by :
     - `<total nb>` transmitted, `<total received>` received, `<% of loss>` packet loss, time `<total time enlapsed>`
     - rtt min/avg/max/mdev = `<round trip time>`
     
-## Options and Flags
+## Options and Flags supplement
+    
+`-I <interface>` : let you define a virtual or a physical address interface instead of the default one. The user can use the IP address or the interface name. Trigger a warning if the [loopback address](https://www.geeksforgeeks.org/what-is-a-loopback-address/) is used since it cannot work.
 
 `-S <size>` : Set the limit of the socket send buffer in bytes. The minimum value is 2048 bytes and it triggeres errors if this is not correctly set, or if a packet is sent with a size that exceed the limit previously set.
 
@@ -91,7 +93,14 @@ Which can be resumed by :
 
 `-T <timestamp>` : This is an interesting one. Since the time enlapsed printed by ping as default is the one between a ECHO_REQUEST and a ECHO_REPLY (**RTT**), this option will make the IP header timestamp be filled with local time then send the ECHO_REQUEST with it ; and the receiver is asked to do the same in return in his ECHO_REPLY packet.   
 It means that with this option, the user can calculate the time that enlapsed between a sent ECHO_REQUEST (by local machine) and a received ECHO_REQUEST (by the targeted machine), in other words ***the time a ECHO_REQUEST makes between two hosts and not only the round trip time***.   
-For a better explanation with a Wireshark example, check [this video](https://youtu.be/4EFEdAyxemk).
+For a better explanation with a Wireshark example, check [this video](https://youtu.be/4EFEdAyxemk).   
+**This option is not implemented yet.**
+
+`-M <hint>` : Use the [MTU discovery path](https://www.oreilly.com/library/view/internet-core-protocols/1565925726/ch05s03s04.html) destined to optimize packet sending by avoiding to send fragmented packets. Another [article](https://blog.cloudflare.com/path-mtu-discovery-in-practice/) is usefull to give us an example on how it's implemented beyond this program. **This option is not implemented yet.**
+
+`-n` : Forbidden the resolution and the use of the Canon Name (see [CNAME record](https://en.wikipedia.org/wiki/CNAME_record)). The only change is to not use the flag `AI_CANONNAME` in the `struct addrinfo` passed as `hint` to `getaddrinfo()` (check the [getaddrinfo man](https://man7.org/linux/man-pages/man3/getaddrinfo.3.html)).
+
+`-w / -W` : set respectively a deadline or/and a timeout in second. For the deadline, a fork is used to send a `SIGINT` signal when the deadline is reached. A minimum and a maximum is set for both.
 
 For more details on socket options, check [here](https://man7.org/linux/man-pages/man7/socket.7.html).
 
