@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 static int      verify_checksum(char *header, size_t header_size, unsigned short checksum) {
     if (header == NULL)

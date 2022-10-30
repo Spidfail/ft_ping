@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 // Transform the input in a network byte order form if it's a valid address
 int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port) {

@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 static int     socket_set_options(const int *sockfd, int opt_num, t_opt_d *opt_data) {
     switch (opt_num) {

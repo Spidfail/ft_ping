@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 /// Allocate and fill the data pointer with the content of
 /// a `struct timeval` upon gettimeofday() call.

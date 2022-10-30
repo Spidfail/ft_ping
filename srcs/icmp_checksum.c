@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 /// Create a checksum by adding 2 octets by 2 octets successively.
 /// For this reaser, buffer has to be casted in `uint16_t *`

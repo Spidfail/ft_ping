@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 void     print_packet(const t_icmp *echo_request, const t_sum *session) {
     char    addr_str[INET_ADDRSTRLEN];

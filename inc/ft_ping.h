@@ -27,7 +27,7 @@
 #include <error.h>
 #include <ifaddrs.h>
 
-#include "./libft_extended/libft.h"
+#include <libft.h>
 
 
 /////////////////////// Constants

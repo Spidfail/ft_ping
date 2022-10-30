@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end) {
     return (((double)end->tv_sec - (double)start->tv_sec) * 1000)

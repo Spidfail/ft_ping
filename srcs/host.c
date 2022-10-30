@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 static bool     is_addr(char *addr) {
     if (addr == NULL || addr[0] == '-')

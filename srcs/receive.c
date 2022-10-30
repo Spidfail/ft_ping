@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 #include <asm-generic/errno-base.h>
 #include <stdlib.h>
 #include <string.h>

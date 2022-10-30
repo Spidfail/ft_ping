@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 static void     opt_error_num_handle(char *arg, size_t limit) {
     size_t  size = 100 + ft_strlen(arg);

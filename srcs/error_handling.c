@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 int error_handle(int errnum, char *err_value) {
     switch (errnum) {

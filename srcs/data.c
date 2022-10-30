@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 void    init_data(t_icmp *echo_request, t_sum *session) {
     session->seq_number = 1;

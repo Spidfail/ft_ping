@@ -1,4 +1,4 @@
-#include "ft_ping.h"
+#include <ft_ping.h>
 
 void            interrupt(int exit_nb) {
     freeaddrinfo(g_data.dest_spec.addr_info);
