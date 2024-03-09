@@ -1,3 +1,4 @@
+#include <ft_opt.h>
 #include <ft_ping.h>
 
 static int     socket_set_options(const int *sockfd, int opt_num, t_opt_d *opt_data) {
@@ -10,7 +11,7 @@ static int     socket_set_options(const int *sockfd, int opt_num, t_opt_d *opt_d
           break;
         case _OPT_W :
           if (setsockopt(*sockfd, SOL_SOCKET, SO_RCVTIMEO_NEW,
-                         &opt_data->timeout, sizeof(struct timeval)) == -1)
+                         &opt_data->linger, sizeof(struct timeval)) == -1)
             error_handle(0, "SO_RCVTIMEO");
           break;
         case _OPT_S :
@@ -18,7 +19,7 @@ static int     socket_set_options(const int *sockfd, int opt_num, t_opt_d *opt_d
                          sizeof(int)) == -1)
             error_handle(0, "SO_SNDBUF");
           break;
-        case _OPT_t :
+        case _OPT_TTL :
           if (setsockopt(*sockfd, IPPROTO_IP, IP_TTL, &opt_data->ttl,
                          sizeof(int)) == -1)
             error_handle(0, "IP_TTL");

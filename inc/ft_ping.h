@@ -63,7 +63,7 @@ Options:\n\
     -m <mark>          tag the packets going out\n\
     -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>\n\
     -n                 no dns name resolution\n\
-    -w <deadline>      reply wait <deadline> in seconds\n\
+    -w <timeout>      reply wait <timeout> in seconds\n\
     -W <timeout>       time to wait for response\n\
     -p <pattern>       contents of padding byte\n\
     -Q <tclass>        use quality of service <tclass> bits\n\
@@ -173,26 +173,7 @@ typedef struct  s_global_data {
     t_opt_d         opt;
 }               t_global;
 
-/////////////////////// Static Struct
-/// -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
-static struct argp_option  argp_opt[] = {
-    { "help", '?', },
-    { "verbose", 'v', },
-    { "flood", 'f', },
-    { "preload",'l', },
-    { "ignore-routing", 'I',},
-    { "numeric", 'n',},
-    { "timeout", 'w',},
-    { "linger", 'W',},
-    { "pattern", 'p',},
-    { "size", 's',},
-    { "type", 't',},
-    { "tos", 'T',},
-    { "ttl", 1,},
-    { "ip-timestamp", 2,},
-};
-
-    
+/////    
 /////////////////////// Global Variables
 extern t_global    g_data;
 

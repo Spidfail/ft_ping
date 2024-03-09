@@ -1,4 +1,5 @@
 #include <ft_ping.h>
+#include <ft_opt.h>
 
 t_global    g_data = {0};
 
@@ -10,30 +11,19 @@ static void    check_input(int ac) {
         error_handle(EX_USAGE, _HEADER_USAGE);
 }
 
-static void            arg_handle(int ac, char *av[], t_opt_d *data, int *addr_pos) {
-    for (int i = 0 ; i < _OPT_MAX_NB ; ++i)
-        data->opt_arg[i] = NULL;
-    bzero(data->opt, _OPT_MAX_NB);
-    bzero(&data->timeout , sizeof(struct timeval));
-    bzero(&data->deadline, sizeof(int));
-    bzero(&data->ttl     , sizeof(int));
-    bzero(&data->sndbuf  , sizeof(int));
-    opt_store(av, ac, data, addr_pos);
+static void            arg_handle(int ac, char *av[], t_opt_d *data) {
+    opt_store(av, ac, data);
     opt_handle(data);
 }
 
 int main(int ac, char *av[]) {
-    int     addr_pos = 0;
-
     ft_bzero(&g_data, sizeof(t_global));
     check_input(ac);
-    arg_handle(ac, av, &g_data.opt, &addr_pos);
+    arg_handle(ac, av, &(g_data.opt));
 
     // If no address has been found in arg_handle()
     // since av[0] points to the bin name
-    if (addr_pos == 0)
-        error_handle(EX_USAGE, NULL);
-    host_lookup(av[addr_pos], &g_data.dest_spec, !g_data.opt.opt[_OPT_n]);
+    host_lookup(g_data.opt.addr_raw, &g_data.dest_spec, !g_data.opt.opt[_OPT_n]);
     socket_init(&g_data.sockfd, &g_data.opt);
     init_data(&g_data.echo_request, &g_data.session);
     print_header_begin(g_data.sockfd, &g_data.dest_spec, &g_data.echo_request, &g_data.opt);

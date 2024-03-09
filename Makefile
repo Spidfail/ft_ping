@@ -9,8 +9,8 @@ OBJ_DIR := objs
 SRC_DIR := srcs
 INC_DIR := inc
 
-CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) -g3 #-fsanitize=address  
-LDFLAGS := -L$(LIBFT_DIR)  #-fsanitize=address 
+CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) -fsanitize=address #-g3   
+LDFLAGS := -L$(LIBFT_DIR) -fsanitize=address 
 LDLIBS := -lft
 
 
@@ -33,7 +33,9 @@ OBJS := $(SRCS:%.c=%.o)
 
 SRC_PATH := $(addprefix $(SRC_DIR)/,$(SRCS))
 OBJ_PATH := $(addprefix $(OBJ_DIR)/,$(OBJS))
-INC := $(LIBFT_DIR)/$(LIBFT_INC) $(INC_DIR)/ft_ping.h
+INC := $(LIBFT_DIR)/$(LIBFT_INC) \
+$(INC_DIR)/ft_ping.h \
+$(INC_DIR)/ft_opt.h
 
 .PHONY: all clean fclean re 
 

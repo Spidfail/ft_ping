@@ -1,6 +1,7 @@
 #include <ft_ping.h>
 #include <ft_opt.h>
 #include <argp.h>
+#include <stdio.h>
 
 static void     opt_error_num_handle(char *arg, size_t limit) {
     size_t  size = 100 + ft_strlen(arg);
@@ -108,55 +109,77 @@ void     opt_handle(t_opt_d *data) {
     for (short i = 0 ; i < _OPT_MAX_NB ; ++i) {
         if (data->opt[i])
             switch(i) {
-                case _OPT_h:
-                    fprintf(stdout, "\n %s\n", _HEADER_USAGE);
-                    interrupt(0);
                 case _OPT_w:
-                    if (opt_set_num_value(&data->deadline, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
+                    if (opt_set_num_value(&data->timeout, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
                         opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                    opt_fork_timeout(data->deadline);
+                    opt_fork_timeout(data->timeout);
                     break;
                 case _OPT_W:
-                    if (opt_set_num_value(&data->timeout, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
+                    if (opt_set_num_value(&data->linger, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
                         opt_error_num_handle(data->opt_arg[i], INT_MAX);
                     break;
                 case _OPT_TTL:
                     if (opt_set_num_value(&data->ttl, CHAR_MAX, data->opt_arg[i]) == EXIT_FAILURE)
                         opt_error_num_handle(data->opt_arg[i], CHAR_MAX);
                     break;
-                // case _OPT_S:
-                //     if (opt_set_num_value(&data->sndbuf, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                //         opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                //     break;
-                // case _OPT_I:
-                //     if (!data->opt_arg[i] || ft_strlen(data->opt_arg[i]) < 1 || ft_strlen(data->opt_arg[i]) > IFNAMSIZ)
-                //         opt_error_handle(data->opt_arg[i], i);
-                //     if (opt_interface_handle(data->opt_arg[i]) == EXIT_FAILURE)
-                //         opt_error_handle(data->opt_arg[i], i);
-                //     break;
+                case _OPT_S:
+                    if (opt_set_num_value(&data->sndbuf, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
+                        opt_error_num_handle(data->opt_arg[i], INT_MAX);
+                    break;
+                case _OPT_I:
+                    if (!data->opt_arg[i] || ft_strlen(data->opt_arg[i]) < 1 || ft_strlen(data->opt_arg[i]) > IFNAMSIZ)
+                        opt_error_handle(data->opt_arg[i], i);
+                    if (opt_interface_handle(data->opt_arg[i]) == EXIT_FAILURE)
+                        opt_error_handle(data->opt_arg[i], i);
+                    break;
             }
     }
 }
 
 // -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
 error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
+    t_opt_d     *option_data = state->input;
+
+    // Temporary
+    (void)option_data;
     switch (key) {
         // HELP already implemented in argp
         // VERSION already implemented in argp
         case 'c':
-            // TODO
-            // if (arg != NULL)
-            // else
+            if (arg != NULL)
+                printf("%s/n", arg);
+            else
+                printf("Empty arg c!\n");
+            break;
+        case _OPT_TTL:
+            if (arg != NULL)
+                printf("%s/n", arg);
+            else
+                printf("Empty arg TTL!\n");
+            break;
+        case _OPT_IPTIMESTAMP:
+            if (arg != NULL)
+                printf("%s/n", arg);
+            else
+                printf("Empty arg iptimestamp!\n");
+            break;
+        case ARGP_KEY_ARG:
+            option_data->addr_raw = arg;
             break;
         default:
             return ARGP_ERR_UNKNOWN;
     }
+    return 0;
 }
 
 /// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
 /// Only the first two are mandatory
-void            opt_store(char *av[], int ac, t_opt_d *opt_data, int *addr_pos) {
+void            opt_store(char *av[], int ac, t_opt_d *opt_data) {
     struct argp argp;
     
-    
+    bzero(&argp, sizeof(struct argp));
+    argp.options = options;
+    argp.parser = opt_parsing;
+    argp.args_doc = "HOST";
+    argp_parse(&argp, ac, av, 0, 0, opt_data);
 }
