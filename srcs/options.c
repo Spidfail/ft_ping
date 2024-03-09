@@ -1,4 +1,6 @@
 #include <ft_ping.h>
+#include <ft_opt.h>
+#include <argp.h>
 
 static void     opt_error_num_handle(char *arg, size_t limit) {
     size_t  size = 100 + ft_strlen(arg);
@@ -118,54 +120,43 @@ void     opt_handle(t_opt_d *data) {
                     if (opt_set_num_value(&data->timeout, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
                         opt_error_num_handle(data->opt_arg[i], INT_MAX);
                     break;
-                case _OPT_t:
+                case _OPT_TTL:
                     if (opt_set_num_value(&data->ttl, CHAR_MAX, data->opt_arg[i]) == EXIT_FAILURE)
                         opt_error_num_handle(data->opt_arg[i], CHAR_MAX);
                     break;
-                case _OPT_S:
-                    if (opt_set_num_value(&data->sndbuf, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                    break;
-                case _OPT_I:
-                    if (!data->opt_arg[i] || ft_strlen(data->opt_arg[i]) < 1 || ft_strlen(data->opt_arg[i]) > IFNAMSIZ)
-                        opt_error_handle(data->opt_arg[i], i);
-                    if (opt_interface_handle(data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_handle(data->opt_arg[i], i);
-                    break;
+                // case _OPT_S:
+                //     if (opt_set_num_value(&data->sndbuf, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
+                //         opt_error_num_handle(data->opt_arg[i], INT_MAX);
+                //     break;
+                // case _OPT_I:
+                //     if (!data->opt_arg[i] || ft_strlen(data->opt_arg[i]) < 1 || ft_strlen(data->opt_arg[i]) > IFNAMSIZ)
+                //         opt_error_handle(data->opt_arg[i], i);
+                //     if (opt_interface_handle(data->opt_arg[i]) == EXIT_FAILURE)
+                //         opt_error_handle(data->opt_arg[i], i);
+                //     break;
             }
+    }
+}
+
+// -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
+error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
+    switch (key) {
+        // HELP already implemented in argp
+        // VERSION already implemented in argp
+        case 'c':
+            // TODO
+            // if (arg != NULL)
+            // else
+            break;
+        default:
+            return ARGP_ERR_UNKNOWN;
     }
 }
 
 /// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
 /// Only the first two are mandatory
-void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data, int *addr_pos) {
-    static const char   *opt_values[_OPT_MAX_NB] = {
-        "-h", "-v", "-f", "-l", "-I", "-m", "-M", "-n",
-        "-w", "-W", "-p", "-Q", "-S", "-t", "-T",
-    };
-
-    // Iterate over arguments and check every arg if this is an option or not.
-    for (int i = 1 ; i < arr_size ; ++i) {
-        for (int j = 0 ; j < _OPT_MAX_NB ; ++j) {
-            // If this is an option, store it
-            if (ft_strcmp(arr[i], opt_values[j]) == 0) {
-                opt_data->opt[j] = true;
-                // If the option have an argument associated.
-                if ((j >= _OPT_l && j <= _OPT_M) || (j >= _OPT_w && j <= _OPT_T)) {
-                    // Then check if a correct arg is associated,
-                    // like it's not an option.
-                    // If it is -> store it / Either throw error.
-                    if (i + 1 < _OPT_MAX_NB && arr[i + 1][0] != '-') {
-                        opt_data->opt_arg[j] = ft_strdup(arr[i + 1]);
-                        ++i;
-                    }
-                    else
-                        error_handle(EX_USAGE, _HEADER_USAGE);
-                }
-                break;
-            }
-            else if (j + 1 == _OPT_MAX_NB)
-                *addr_pos = i;
-        }
-    }
+void            opt_store(char *av[], int ac, t_opt_d *opt_data, int *addr_pos) {
+    struct argp argp;
+    
+    
 }

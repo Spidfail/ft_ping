@@ -1,6 +1,7 @@
 
 #ifndef FT_PING_H /////////////////////////////////////////////////////////////
 # define FT_PING_H
+#include <argp.h>
 #include <bits/types/struct_timeval.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -28,6 +29,7 @@
 #include <ifaddrs.h>
 
 #include <libft.h>
+#include <ft_opt.h>
 
 
 /////////////////////// Constants
@@ -36,14 +38,11 @@
 #endif
 
 #define _INET_FAM AF_INET
+#define _IO_DEBIAN "ens33\0"
 
 #define _IP_HDR_SIZE 20
 #define _ICMP_HDR_SIZE 8
 #define _PING_DATA_SIZE 56
-
-#define _OPT_MAX_NB 15
-#define _OPT_ARG_MAX_NB 11
-#define _OPT_DATA_LEN _OPT_MAX_NB + _OPT_ARG_MAX_NB
 
 #define _EX_NOERRNO -1
 
@@ -105,43 +104,12 @@ IPv4 options:\n\
 #define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
     printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
 
-
 /////////////////////// Typedef
-
 typedef uint    ifa_flag_t;
 #define IFAFLAG_NULL 0
 
 
-/////////////////////// Enum
-/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
-typedef enum    e_opt_list {
-    _OPT_h,
-    _OPT_v,
-    _OPT_f,
-    _OPT_l, // <arg>
-    _OPT_I, // <arg>
-    _OPT_m, // <arg>
-    _OPT_M, // <arg>
-    _OPT_n,
-    _OPT_w, // <arg>
-    _OPT_W, // <arg>
-    _OPT_p, // <arg>
-    _OPT_Q, // <arg>
-    _OPT_S, // <arg>
-    _OPT_t, // <arg>
-    _OPT_T, // <arg>
-}               t_opt_e;
-
 /////////////////////// Structs
-typedef struct  s_opt_data {
-    bool            opt[_OPT_MAX_NB];
-    char            *opt_arg[_OPT_MAX_NB];
-    struct timeval  timeout;
-    int             deadline;
-    int             ttl;
-    int             sndbuf;
-}               t_opt_d;
-
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -205,6 +173,24 @@ typedef struct  s_global_data {
     t_opt_d         opt;
 }               t_global;
 
+/////////////////////// Static Struct
+/// -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
+static struct argp_option  argp_opt[] = {
+    { "help", '?', },
+    { "verbose", 'v', },
+    { "flood", 'f', },
+    { "preload",'l', },
+    { "ignore-routing", 'I',},
+    { "numeric", 'n',},
+    { "timeout", 'w',},
+    { "linger", 'W',},
+    { "pattern", 'p',},
+    { "size", 's',},
+    { "type", 't',},
+    { "tos", 'T',},
+    { "ttl", 1,},
+    { "ip-timestamp", 2,},
+};
 
     
 /////////////////////// Global Variables
@@ -257,11 +243,6 @@ void        interrupt(int exit_nb);
 double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
 void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
 
-// OPTIONS
-void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data, int *addr_pos);
-bool            get_opt(t_opt_e opt_value, t_opt_d *data);
-char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
-void            opt_handle(t_opt_d *data);
 
 // SOCKET
 void            socket_init(int *sockfd, t_opt_d *opt_data);
