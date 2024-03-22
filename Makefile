@@ -26,6 +26,8 @@ SRCS := ft_ping.c \
 	get_time.c \
 	host.c \
 	options.c \
+	options_check.c \
+	options_error.c \
 	socket.c \
 	loop.c \
 	interface.c
