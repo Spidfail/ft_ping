@@ -1,34 +1,29 @@
 #include <ft_opt.h>
 #include <ft_ping.h>
 
-static int     socket_set_options(const int *sockfd, int opt_num, t_opt_d *opt_data) {
-    switch (opt_num) {
-        case _OPT_I :
-          if (setsockopt(*sockfd, SOL_SOCKET, SO_BINDTODEVICE,
-                         opt_data->opt_arg[opt_num],
-                         ft_strlen(opt_data->opt_arg[opt_num])) == -1)
-            error_handle(0, "SO_BINDTODEVICE");
-          break;
-        case _OPT_W :
-          if (setsockopt(*sockfd, SOL_SOCKET, SO_RCVTIMEO_NEW,
-                         &opt_data->linger, sizeof(struct timeval)) == -1)
-            error_handle(0, "SO_RCVTIMEO");
-          break;
-        case _OPT_S :
-          if (setsockopt(*sockfd, SOL_SOCKET, SO_SNDBUF, &opt_data->sndbuf,
+static int     socket_set_options(const int *sockfd, t_arg_d *arg_data) {
+    if (arg_data->interface)
+        if (setsockopt(*sockfd, SOL_SOCKET, SO_BINDTODEVICE,
+                       arg_data->interface,
+                       ft_strlen(arg_data->interface)) == -1)
+          error_handle(0, "SO_BINDTODEVICE");
+
+    if (arg_data->linger)
+        if (setsockopt(*sockfd, SOL_SOCKET, SO_RCVTIMEO_NEW,
+                       &arg_data->linger, sizeof(struct timeval)) == -1)
+          error_handle(0, "SO_RCVTIMEO");
+    if (arg_data->sndbuf)
+          if (setsockopt(*sockfd, SOL_SOCKET, SO_SNDBUF, &arg_data->sndbuf,
                          sizeof(int)) == -1)
             error_handle(0, "SO_SNDBUF");
-          break;
-        case _OPT_TTL :
-          if (setsockopt(*sockfd, IPPROTO_IP, IP_TTL, &opt_data->ttl,
+    if (arg_data->ttl)
+          if (setsockopt(*sockfd, IPPROTO_IP, IP_TTL, &arg_data->ttl,
                          sizeof(int)) == -1)
             error_handle(0, "IP_TTL");
-          break;
-    }
     return EXIT_SUCCESS;
 }
 
-void            socket_init(int *sockfd, t_opt_d *opt_data) {
+void            socket_init(int *sockfd, t_arg_d *arg_data) {
     if (sockfd == NULL)
         error_handle(0, "BUG : Please give us a valid sockfd pointer...\n");
     //// Build the address:
@@ -37,8 +32,5 @@ void            socket_init(int *sockfd, t_opt_d *opt_data) {
     // AF_INET for IPV4 type addr.
     if ((*sockfd = socket(_INET_FAM, SOCK_RAW, IPPROTO_ICMP)) == -1)
         error_handle(0, "Failed to open socket [AF_INET, SOCK_RAW, IPPROTO_ICMP]");
-    for (int i = 0 ; i < _OPT_MAX_NB ; ++i) {
-        if (opt_data->opt[i])
-            socket_set_options(sockfd, i, opt_data);
-    }
+      socket_set_options(sockfd, arg_data);
 }

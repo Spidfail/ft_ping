@@ -8,92 +8,85 @@
 #include <stdio.h>
 #include <argp.h>
 
-/////////////////////// Enum
-/// implemented (augmented): -I -S
-/// -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
-typedef enum    e_opt_list {
-    // _OPT_h,
-    _OPT_c,
-    _OPT_i, // <arg>
-    _OPT_n,
-    _OPT_r,
-    _OPT_TTL,
-    _OPT_T, // <arg>
-    _OPT_v,
-    _OPT_w, // <arg>
-    _OPT_W, // <arg>
-    _OPT_f,
-    _OPT_IPTIMESTAMP,
-    _OPT_l, // <arg>
-    _OPT_p, // <arg>
-    _OPT_q,
-    _OPT_s, // <arg>
-    _OPT_I,
-    _OPT_S, // <arg>
-    _OPT_MAX_NB
-}               t_opt_e;
-
 // DEFINE
-#define _OPT_ARG_MAX_NB 11
-#define _OPT_DATA_LEN _OPT_MAX_NB + _OPT_ARG_MAX_NB
+#define _ERROR_OPT_INVALID "invalide value"
+#define _ERROR_OPT_TOOSMALL "option value too small"
+#define _ERROR_OPT_TOOBIG "option value too big"
+
+typedef enum  e_opt_error_num {
+    OPT_ERR_INVALID,
+    OPT_ERR_TOOSMALL,
+    OPT_ERR_TOOBIG,
+    OPT_ERR_PATTERN,
+    OPT_ERR_IFA,
+}               t_opt_err;
 
 // STRUCT
-typedef struct  s_opt_data {
-    bool            opt[_OPT_MAX_NB];
-    char            *opt_arg[_OPT_MAX_NB];
-    char            *addr_raw;
+typedef struct  s_arg_data {
+    char            *arg_raw;
+    bool            verbose;
+    bool            help;
     int             count;
     int             interval;
     bool            numeric;
-    bool            ignore_routing;
     int             ttl;
     int             tos;
+    bool            version;
     int             timeout;
     struct timeval  timeout_timeval;
     int             linger;
     int             flood;
-    int             iptimestamp;
+    // int             iptimestamp;
     int             preload;
-    int             pattern;
-    int             quiet;
+    char            *pattern;
+    bool            quiet;
     int             size;
     char            *interface;
     int             sndbuf;
-}               t_opt_d;
+}               t_arg_d;
 
 ////////////////// Static Struct
 /// implemented (inetutils-v2): -h -v -f -w -W -n -TTL
 /// implemented (augmented): -I -S
 /// -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
+#define _OPT_ARGPK_TTL 1
+#define _OPT_ARGPK_IPTIMESTAMP 2
+
 static struct argp_option  options[] = {
     // Already implemented by `argp`
     // { "help", '?', 0, 0, "give this help list", 0},
     // { "version", 'V', 0, 0, "print program version", 0},
+    { "help", '?', 0, 0, "give this help list", 0},
+    { "verbose", 'v', 0, 0, "verbose output", 0},
     { "count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", 0},
     { "interval", 'i', "NUMBER", 0, "wait NUMBER seconds between sending each packet", 0},
     { "numeric", 'n', 0, 0, "do not resolve host addresses", 0},
-    { "ignore-routing", 'r',0, 0, "send directly to a host on an attached network", 0},
-    { "ttl", _OPT_TTL, "NUMBER", 0, "specify N as time-to-live", 0},
+    { "ttl", _OPT_ARGPK_TTL, "NUMBER", 0, "specify N as time-to-live", 0},
     { "tos", 'T', "NUM", 0, "set type of service (TOS) to NUM", 0},
-    { "verbose", 'v', 0, 0, "verbose output", 0},
     { "timeout", 'w', "N", 0, "stop after N seconds", 0},
     { "linger", 'W', "N", 0, "number of seconds to wait for response", 0},
     { "flood", 'f',0, 0, "flood ping (root only)", 0},
-    { "ip-timestamp", _OPT_IPTIMESTAMP, "FLAG", 0, "IP timestamp of type FLAG, which is one of \"tsonly\" and \"tsaddr\"", 0},
+    // { "ip-timestamp", _OPT_ARGPK_IPTIMESTAMP, "FLAG", 0, "IP timestamp of type FLAG, which is one of \"tsonly\" and \"tsaddr\"", 0},
     { "preload",'l', "NUMBER", 0, "send NUMBER packets as fast as possible before falling into normal mode of behavior (root only)", 0},
     { "pattern", 'p', "PATTERN", 0, "fill ICMP packet with given pattern (hex)", 0},
     { "quiet", 'q', 0, 0, "quiet output", 0},
     { "size", 's', "SIZE", 0, "send NUMBER data octets", 0},
     // Augmented, not available in inetutils-v2
-    { "interface", 'I',0, 0, "either interface name or address", 0},
-    { "sendbuf", 'S',0, 0, "use <size> as SO_SNDBUF socket option value", 0},
+    { "interface", 'I', "IFACE", 0, "either interface name or address", 0},
+    { "sendbuf", 'S', "SIZE", 0, "use <size> as SO_SNDBUF socket option value", 0},
     { 0 }
 };
 
 // FUNCTION
-void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data);
-bool            get_opt(t_opt_e opt_value, t_opt_d *data);
-char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
-void            opt_handle(t_opt_d *data);
+error_t         opt_parsing(int key, char *arg, struct argp_state *state);
+void            opt_fork_timeout(int scd);
+
+// Option checking
+int             option_check_is_digit(char *argument);
+int             option_check_is_alnum(char *argument);
+int             option_check_is_hex(char *argument);
+
+// Error handling
+void            opt_error_handle(t_opt_err errnum, char *arg, int exnum);
 
 #endif

@@ -2,7 +2,7 @@
 
 void            interrupt(int exit_nb) {
     freeaddrinfo(g_data.dest_spec.addr_info);
-    free_data(&g_data.echo_request, &g_data.opt);
+    free_data(&g_data.echo_request);
     close(g_data.sockfd);
     exit(exit_nb);
 }
@@ -16,12 +16,12 @@ void            new_load() {
 }
 
 void            handle_tick() {
-    if (!g_data.opt.opt[_OPT_f]) {
+    if (!g_data.args.flood) {
       if ((g_data.echo_request.is_packet &&
            g_data.echo_request.packet->icmp_hdr.type == ICMP_ECHOREPLY) ||
-          !g_data.opt.opt[_OPT_v])
+          !g_data.args.verbose)
         print_packet(&g_data.echo_request, &g_data.session);
-      else if (g_data.opt.opt[_OPT_v]) {
+      else if (g_data.args.verbose) {
         print_packet_error(&g_data.echo_request,
                            g_data.echo_request.packet->icmp_hdr.type,
                            g_data.echo_request.packet->icmp_hdr.code);

@@ -1,7 +1,6 @@
 
 #ifndef FT_PING_H /////////////////////////////////////////////////////////////
 # define FT_PING_H
-#include <argp.h>
 #include <bits/types/struct_timeval.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -170,7 +169,7 @@ typedef struct  s_global_data {
     t_host          dest_spec;
     t_sum           session;
     int             sockfd;
-    t_opt_d         opt;
+    t_arg_d         args;
 }               t_global;
 
 /////    
@@ -206,13 +205,13 @@ int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, cons
 // PRINT
 void        print_packet(const t_icmp *echo_request, const t_sum *session);
 void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
-void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_opt_d* const opt_data);
+void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_arg_d* const arg_data);
 void        print_sum(t_sum *sumup, t_host *dest);
 
 // DATA
 void        init_data(t_icmp *echo_request, t_sum *session);
 void        clean_data(t_icmp *echo_request);
-void        free_data(t_icmp *echo_request, t_opt_d *opt_data);
+void        free_data(t_icmp *echo_request);
 
 // SIGNAL HANDLER
 void        signal_handler(int sig);
@@ -226,7 +225,7 @@ void        update_time(t_sum *session, const struct timeval *start, const struc
 
 
 // SOCKET
-void            socket_init(int *sockfd, t_opt_d *opt_data);
+void            socket_init(int *sockfd, t_arg_d *arg_data);
 
 // LOOP
 void            loop_flood();

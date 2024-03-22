@@ -1,75 +1,7 @@
+#include "ft_opt.h"
 #include <ft_ping.h>
-#include <ft_opt.h>
-#include <argp.h>
-#include <stdio.h>
 
-static void     opt_error_num_handle(char *arg, size_t limit) {
-    size_t  size = 100 + ft_strlen(arg);
-    char    *buff_err = ft_calloc(size, sizeof(char));
-
-    if (buff_err == NULL)
-        error_handle(0, buff_err);
-    if (limit != 0)
-        sprintf(buff_err, "ping: invalid argument: '%s': out of range: 0 <= value <= %lu", arg, limit);
-    else
-        sprintf(buff_err, "ping: invalid argument: '%s'", arg);
-    error_handle(_EX_NOERRNO, buff_err);
-}
-
-static void     opt_error_handle(char *arg, int opt) {
-    int len = (sizeof(_ERROR_HEADER) * 2) + sizeof(' ') // 'ping: '
-            + sizeof(_ERROR_INTERFACE_SRCADDR) + sizeof('\n')
-            + sizeof(_ERROR_INTERFACE_IFACE)
-            + (IFNAMSIZ * 2) + 1;
-    char err_interface[len];
-    bzero(err_interface, len);
-
-    switch (opt) {
-        case _OPT_I:
-            ft_strlcat(err_interface, _ERROR_HEADER, len);
-            ft_strlcat(err_interface, " ", len);
-            ft_strlcat(err_interface, _ERROR_INTERFACE_SRCADDR, len);
-            ft_strlcat(err_interface, arg, len);
-            ft_strlcat(err_interface, "\n", len);
-
-            ft_strlcat(err_interface, _ERROR_HEADER, len);
-            ft_strlcat(err_interface, " ", len);
-            ft_strlcat(err_interface, _ERROR_INTERFACE_IFACE, len);
-            ft_strlcat(err_interface, arg, len);
-        //It may be more to add
-    }
-    error_handle(_EX_NOERRNO, err_interface);
-}
-
-static int     opt_set_num_value(void *buff, long limit, char *arg) {
-    long      nb = 0;
-
-    if (arg == NULL || ft_strlen(arg) == 0)
-        opt_error_num_handle(arg, 0);
-    for (size_t i = 0 ; i < ft_strlen(arg) ; ++i)
-        if (!ft_isdigit(arg[i]))
-            opt_error_num_handle(arg, 0);
-    nb = ft_atol(arg);
-    if (nb > limit || nb < 0)
-        return EXIT_FAILURE;
-    if (limit <= CHAR_MAX)
-        *(char*)buff = nb;
-    else if (limit <= UCHAR_MAX)
-        *(unsigned char*)buff = nb;
-    else if (limit <= SHRT_MAX)
-        *(short*)buff = nb;
-    else if (limit <= USHRT_MAX)
-        *(ushort*)buff = nb;
-    else if (limit <= INT_MAX)
-        *(int*)buff = nb;
-    else if (limit <= UINT_MAX)
-        *(unsigned int*)buff = nb;
-    else if (limit <= LONG_MAX)
-        *(long*)buff = nb;
-    return EXIT_SUCCESS;
-}
-
-static void     opt_fork_timeout(int scd) {
+void     opt_fork_timeout(int scd) {
     __pid_t parent_id = getpid();
     __pid_t pid = fork();
     if (pid == 0) {
@@ -77,14 +9,6 @@ static void     opt_fork_timeout(int scd) {
         kill(parent_id, SIGINT);
         exit(0);
     }
-}
-
-bool            get_opt(t_opt_e opt_value, t_opt_d *data) {
-    return data->opt[opt_value];
-}
-
-char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data) {
-    return data->opt_arg[opt_value];
 }
 
 static int    opt_interface_handle(const char *raw_addr) {
@@ -105,81 +29,156 @@ static int    opt_interface_handle(const char *raw_addr) {
     return rtn;
 }
 
-void     opt_handle(t_opt_d *data) {
-    for (short i = 0 ; i < _OPT_MAX_NB ; ++i) {
-        if (data->opt[i])
-            switch(i) {
-                case _OPT_w:
-                    if (opt_set_num_value(&data->timeout, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                    opt_fork_timeout(data->timeout);
-                    break;
-                case _OPT_W:
-                    if (opt_set_num_value(&data->linger, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                    break;
-                case _OPT_TTL:
-                    if (opt_set_num_value(&data->ttl, CHAR_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_num_handle(data->opt_arg[i], CHAR_MAX);
-                    break;
-                case _OPT_S:
-                    if (opt_set_num_value(&data->sndbuf, INT_MAX, data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_num_handle(data->opt_arg[i], INT_MAX);
-                    break;
-                case _OPT_I:
-                    if (!data->opt_arg[i] || ft_strlen(data->opt_arg[i]) < 1 || ft_strlen(data->opt_arg[i]) > IFNAMSIZ)
-                        opt_error_handle(data->opt_arg[i], i);
-                    if (opt_interface_handle(data->opt_arg[i]) == EXIT_FAILURE)
-                        opt_error_handle(data->opt_arg[i], i);
-                    break;
-            }
-    }
-}
-
 // -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
 error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
-    t_opt_d     *option_data = state->input;
+    t_arg_d     *option_data = state->input;
+    error_t     error_exnum = -1;
 
-    // Temporary
-    (void)option_data;
     switch (key) {
-        // HELP already implemented in argp
-        // VERSION already implemented in argp
+        // TODO: HELP already implemented in argp, need a way to mitigate it
+        case '?':
+            option_data->version = true;
+            break;
+
+        case 'v':
+            option_data->verbose = true;
+            break;
+        
         case 'c':
-            if (arg != NULL)
-                printf("%s/n", arg);
-            else
-                printf("Empty arg c!\n");
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            option_data->count = ft_atoi(arg);
             break;
-        case _OPT_TTL:
-            if (arg != NULL)
-                printf("%s/n", arg);
-            else
-                printf("Empty arg TTL!\n");
+
+        case 'i':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            else if (ft_atoi(arg) < 1)
+                opt_error_handle(OPT_ERR_TOOSMALL, arg, error_exnum);
+            option_data->interval = ft_atoi(arg);
             break;
-        case _OPT_IPTIMESTAMP:
-            if (arg != NULL)
-                printf("%s/n", arg);
-            else
-                printf("Empty arg iptimestamp!\n");
+
+        case 'n':
+            option_data->numeric = true;
             break;
+
+        case _OPT_ARGPK_TTL:
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            else if (ft_atoi(arg) < 1)
+                opt_error_handle(OPT_ERR_TOOSMALL, arg, error_exnum);
+            option_data->ttl = ft_atoi(arg);
+            break;
+
+        case 'T':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // Depends on the architecture
+            else if (ft_strlen(arg) > 3)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->tos = ft_atoi(arg);
+            if (option_data->tos > CHAR_MAX)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            else if (option_data->tos < 1)
+                opt_error_handle(OPT_ERR_TOOSMALL, arg, error_exnum);
+            break;
+
+
+        case 'w':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // Depends on the architecture
+            else if (ft_strlen(arg) > 10)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            if (ft_atol(arg) > INT_MAX)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->timeout = ft_atoi(arg);
+            if (option_data->timeout < 1)
+                opt_error_handle(OPT_ERR_TOOSMALL, arg, error_exnum);
+            break;
+
+        case 'W':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // Depends on the architecture
+            else if (ft_strlen(arg) > 10)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            if (ft_atol(arg) > INT_MAX)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->linger = ft_atoi(arg);
+            if (option_data->linger < 1)
+                opt_error_handle(OPT_ERR_TOOSMALL, arg, error_exnum);
+            break;
+
+        case 'f':
+            option_data->flood = true;
+            break;
+
+        // case _OPT_IPTIMESTAMP:
+        //     if (arg != NULL)
+        //         printf("%s/n", arg);
+        //     else
+        //         printf("Empty arg iptimestamp!\n");
+        //     break;
+
+        case 'l':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // Depends on the architecture
+            else if (ft_strlen(arg) > 10)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            if (ft_atol(arg) > INT_MAX)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->preload = ft_atoi(arg);
+            break;
+
+        case 'p':
+            if (option_check_is_hex(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            option_data->pattern = arg;
+            break;
+
+        case 'q':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            option_data->quiet = true;
+            break;
+
+        case 's':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // If has more char than IP_MAXPACKET number
+            if (ft_strlen(arg) > 5)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->size = ft_atoi(arg);
+            if (option_data->size > IP_MAXPACKET - _IP_HDR_SIZE - _ICMP_HDR_SIZE)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            break;
+
+        case 'I':
+            if (!arg || ft_strlen(arg) < 1 || ft_strlen(arg) > IFNAMSIZ)
+                opt_error_handle(OPT_ERR_IFA, arg, error_exnum);
+            if (opt_interface_handle(arg) == EXIT_FAILURE)
+                opt_error_handle(OPT_ERR_IFA, arg, error_exnum);
+            option_data->interface = arg;
+            break;
+
+        case 'S':
+            if (option_check_is_digit(arg) )
+                opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);
+            // Depends on the architecture
+            else if (ft_strlen(arg) > 10)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            if (ft_atol(arg) > INT_MAX)
+                opt_error_handle(OPT_ERR_TOOBIG, arg, error_exnum);
+            option_data->sndbuf = ft_atoi(arg);
+            break;
+
         case ARGP_KEY_ARG:
-            option_data->addr_raw = arg;
+            option_data->arg_raw = arg;
             break;
         default:
             return ARGP_ERR_UNKNOWN;
     }
     return 0;
-}
-
-/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
-/// Only the first two are mandatory
-void            opt_store(char *av[], int ac, t_opt_d *opt_data) {
-    struct argp argp;
-    
-    bzero(&argp, sizeof(struct argp));
-    argp.options = options;
-    argp.parser = opt_parsing;
-    argp.args_doc = "HOST";
-    argp_parse(&argp, ac, av, 0, 0, opt_data);
 }
