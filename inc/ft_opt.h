@@ -60,6 +60,7 @@ typedef struct  s_arg_data {
 /// -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
 static struct   argp_option  options[] = {
     // Already implemented by `argp`
+    {0,0,0,0, "Options valid for all request types:", 0},
     { "count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", 1},
     { "interval", 'i', "NUMBER", 0, "wait NUMBER seconds between sending each packet", 1},
     { "numeric", 'n', 0, 0, "do not resolve host addresses", 1},
@@ -68,6 +69,8 @@ static struct   argp_option  options[] = {
     { "verbose", 'v', 0, 0, "verbose output", 1},
     { "timeout", 'w', "N", 0, "stop after N seconds", 1},
     { "linger", 'W', "N", 0, "number of seconds to wait for response", 1},
+
+    {0,0,0,0, "Options valid for --echo requests:", 0},
     { "flood", 'f',0, 0, "flood ping (root only)", 2},
     // { "ip-timestamp", _OPT_ARGPK_IPTIMESTAMP, "FLAG", 0, "IP timestamp of type FLAG, which is one of \"tsonly\" and \"tsaddr\"", 0},
     { "preload",'l', "NUMBER", 0, "send NUMBER packets as fast as possible before falling into normal mode of behavior (root only)", 2},
