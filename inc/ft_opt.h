@@ -16,7 +16,8 @@
 #define _OPT_ARGPK_TTL 1
 #define _OPT_ARGPK_IPTIMESTAMP 2
 
-#define _OPT_ARGP_DOC "Send ICMP ECHO_REQUEST packets to network hosts."
+#define _OPT_ARGP_DOC "Send ICMP ECHO_REQUEST packets to network hosts.\
+\vOptions marked with (root only) are available only to superuser."
 #define _OPT_ARGP_BUG_ADDR "<https://github.com/Spidfail/ft_ping>"
 #define _OPT_ARGP_VERSION "ft_ping-v2"
 #define _OPT_ARGP_ARGS_DOC "HOST"
