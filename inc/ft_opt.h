@@ -17,6 +17,8 @@
 #define _OPT_ARGPK_IPTIMESTAMP 2
 
 #define _OPT_ARGP_DOC "Send ICMP ECHO_REQUEST packets to network hosts."
+#define _OPT_ARGP_BUG_ADDR "<https://github.com/Spidfail/ft_ping>"
+#define _OPT_ARGP_VERSION "ft_ping-v2"
 #define _OPT_ARGP_ARGS_DOC "HOST"
 
 
@@ -77,6 +79,7 @@ static struct   argp_option  options[] = {
     { "sendbuf", 'S', "SIZE", 0, "use <size> as SO_SNDBUF socket option value", 3},
     { 0 }
 };
+
 
 // FUNCTION
 error_t         opt_parsing(int key, char *arg, struct argp_state *state);

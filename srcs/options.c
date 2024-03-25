@@ -40,10 +40,6 @@ error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
             option_data->verbose = true;
             break;
 
-        case 'V':
-            option_data->version = true;
-            break;
-        
         case 'c':
             if (option_check_is_digit(arg) )
                 opt_error_handle(OPT_ERR_INVALID, arg, error_exnum);

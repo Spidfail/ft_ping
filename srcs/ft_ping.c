@@ -1,7 +1,9 @@
+#include "ft_opt.h"
 #include <ft_ping.h>
-#include <ft_opt.h>
 
 t_global    g_data = {0};
+const char *argp_program_bug_address = _OPT_ARGP_BUG_ADDR;
+const char *argp_program_version = _OPT_ARGP_VERSION;
 
 static void    check_input(int ac) {
     if (ac < 2)
