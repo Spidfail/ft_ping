@@ -14,7 +14,8 @@ static void            parse_input(char *av[], int ac, t_arg_d *arg_data) {
     bzero(&argp, sizeof(struct argp));
     argp.options = options;
     argp.parser = opt_parsing;
-    argp.args_doc = "HOST";
+    argp.doc = _OPT_ARGP_DOC;
+    argp.args_doc = _OPT_ARGP_ARGS_DOC;
     argp_parse(&argp, ac, av, 0, 0, arg_data);
 }
 

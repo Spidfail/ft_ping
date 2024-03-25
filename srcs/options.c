@@ -36,12 +36,12 @@ error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
 
     switch (key) {
         // TODO: HELP already implemented in argp, need a way to mitigate it
-        case '?':
-            option_data->version = true;
-            break;
-
         case 'v':
             option_data->verbose = true;
+            break;
+
+        case 'V':
+            option_data->version = true;
             break;
         
         case 'c':
