@@ -7,6 +7,14 @@ void            interrupt(int exit_nb) {
     exit(exit_nb);
 }
 
+void            end_session(t_sum *session, t_host *dest) {
+    if (session->time_end.tv_sec == 0 && session->time_end.tv_usec == 0)
+        if (gettimeofday(&(session->time_end), NULL) == -1)
+            error_handle(0, "Error while gettin' end time");
+    print_sum(session, dest);
+    interrupt(0);
+}
+
 void            new_load() {
     clean_data(&g_data.echo_request);
     ++g_data.session.seq_number;
@@ -45,11 +53,7 @@ void            handle_tick() {
 void            signal_handler(int sig) {
     switch (sig) {
         case SIGINT :
-            if (g_data.session.time_end.tv_sec == 0 && g_data.session.time_end.tv_usec == 0)
-                if (gettimeofday(&g_data.session.time_end, NULL) == -1)
-                    error_handle(0, "Error while gettin' end time");
-            print_sum(&g_data.session, &g_data.dest_spec);
-            interrupt(0);
+            end_session(&(g_data.session), &(g_data.dest_spec));
         break;
         case SIGALRM :
             handle_tick();

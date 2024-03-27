@@ -221,6 +221,7 @@ void        free_data(t_icmp *echo_request);
 void        signal_handler(int sig);
 void        handle_tick();
 void        new_load();
+void        end_session(t_sum *session, t_host *dest);
 void        interrupt(int exit_nb);
 
 // TIME
