@@ -5,6 +5,7 @@ void    init_data(t_icmp *echo_request, t_sum *session) {
     session->time_min = DBL_MAX;
     session->time_max = DBL_MIN;
 
+    echo_request->ident = getpid() & 0xFFFF;
     echo_request->data_size = _PING_DATA_SIZE;
     echo_request->datagram_size = _ICMP_HDR_SIZE + echo_request->data_size;
     echo_request->packet_size = _IP_HDR_SIZE + echo_request->datagram_size;

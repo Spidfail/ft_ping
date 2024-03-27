@@ -81,12 +81,15 @@ IPv4 options:\n\
     printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%f ms\n", \
     recv_size, ip_addr, seq, ttl, ms); \
 
-#define __PRINT_HEADER_BEG(name_can, name_ip, data_size, packet_size) \
-    printf("PING %s (%s) %lu(%lu) bytes of data.\n", \
+#define __PRINT_HEADER_DATABYTE(name_can, name_ip, data_size, packet_size) \
+    printf("PING %s (%s) %lu(%lu) data bytes", \
     name_can, name_ip, data_size, packet_size); \
 
+#define __PRINT_HEADER_VERBOSE(indent) \
+    printf(", id 0x%04x = %u", indent, indent);
+
 #define __PRINT_HEADER_BEG_IF(name_can, name_ip, data_size, packet_size, ip_local, interface) \
-    printf("PING %s (%s) from %s %s: %lu(%lu) bytes of data.\n", \
+    printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
 #define __PRINT_SUM(name_canon, nb_sent, nb_recv, nb_errors, overall_time) \
@@ -150,6 +153,7 @@ typedef struct  s_icmp {
     size_t          packet_size;
     ssize_t         received_size;
     bool            is_packet;
+    uint16_t         ident;
 }               t_icmp;
 
 typedef struct  s_session_sum {

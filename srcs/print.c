@@ -46,9 +46,9 @@ void    print_header_begin(int sockfd, const t_host *dest, const t_icmp *request
     // If the resolution has been done (by default )
     if (!arg_data->interface) {
         if (dest->addr_info->ai_canonname)
-            __PRINT_HEADER_BEG(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size)
+            __PRINT_HEADER_DATABYTE(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size)
         else
-            __PRINT_HEADER_BEG(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size)
+            __PRINT_HEADER_DATABYTE(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size)
     }
     else {
         char                host_addr[INET_ADDRSTRLEN];
@@ -88,6 +88,9 @@ void    print_header_begin(int sockfd, const t_host *dest, const t_icmp *request
         else
             __PRINT_HEADER_BEG_IF(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size, host_addr, arg_data->interface)
     }
+    if (arg_data->verbose)
+        __PRINT_HEADER_VERBOSE(request->ident);
+    printf("\n");
 }
 
 void    print_sum(t_sum *sumup, t_host *dest) {
