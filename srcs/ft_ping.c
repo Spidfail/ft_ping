@@ -1,5 +1,7 @@
 #include "ft_opt.h"
+#include <errno.h>
 #include <ft_ping.h>
+#include <signal.h>
 
 t_global    g_data = {0};
 const char *argp_program_bug_address = _OPT_ARGP_BUG_ADDR;
@@ -10,7 +12,7 @@ static void    check_input(int ac) {
         error_handle(EX_USAGE, NULL);
 }
 
-static void            parse_input(char *av[], int ac, t_arg_d *arg_data) {
+static void     parse_input(char *av[], int ac, t_arg_d *arg_data) {
     struct argp argp;
     
     bzero(&argp, sizeof(struct argp));
@@ -28,11 +30,21 @@ static void     arg_handle(t_global *data, int ac, char *av[]) {
         opt_fork_timeout(data->args.timeout);
 }
 
+static int      init_signals() {
+    if (signal(SIGINT, signal_handler) == SIG_ERR ||
+            signal(SIGALRM, signal_handler) == SIG_ERR)
+        return -1;
+    return 0;
+}
+
+static int      start_timer() {
+    return gettimeofday(&g_data.session.time_start, NULL);
+}
+
 
 int main(int ac, char *av[]) {
     ft_bzero(&g_data, sizeof(t_global));
     arg_handle(&g_data, ac, av);
-
 
     // If no address has been found in arg_handle()
     // since av[0] points to the bin name
@@ -40,11 +52,9 @@ int main(int ac, char *av[]) {
     socket_init(&g_data.sockfd, &g_data.args);
     init_data(&g_data.echo_request, &g_data.session);
     print_header_begin(g_data.sockfd, &g_data.dest_spec, &g_data.echo_request, &g_data.args);
-    // Prepare signals to be catch
-    signal(SIGINT, signal_handler);
-    signal(SIGALRM, signal_handler);
-    // Launch timer
-    if (gettimeofday(&g_data.session.time_start, NULL) == -1)
+    if (init_signals() == -1)
+        error_handle(errno, "Error signal()");
+    if (start_timer() == -1)
         error_handle(0, "Error while gettin' time");
     if (send_new_packet(g_data.sockfd, &g_data.echo_request, &g_data.dest_spec, &g_data.session) == -1)
         error_handle(0, "Error while sending data");
