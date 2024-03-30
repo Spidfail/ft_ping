@@ -42,30 +42,55 @@ void    print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec) {
     }
 }
 
-void    print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_opt_d* const opt_data) {
+void    print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_arg_d* const arg_data) {
     // If the resolution has been done (by default )
-    if (!opt_data->opt[_OPT_I]) {
+    if (!arg_data->interface) {
         if (dest->addr_info->ai_canonname)
-            __PRINT_HEADER_BEG(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size)
+            __PRINT_HEADER_DATABYTE(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size)
         else
-            __PRINT_HEADER_BEG(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size)
+            __PRINT_HEADER_DATABYTE(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size)
     }
     else {
         char                host_addr[INET_ADDRSTRLEN];
         struct ifreq        ifr = {0};
+        
+        // struct sockaddr     socket;
+        // socklen_t           slen;
+        // struct ifaddrs      *interfaces;
+        
+        // printf("ENTERS PRINT_HEADER_BEGIN NORMAL!!!!!\n");
+        // if (getsockname(sockfd, &socket, &slen) == -1) {
+        //     printf("AIAIAIAIAIAIAIAI\n");
+        //     exit(-1);
+        // }
+        // if (getifaddrs(&interfaces) == -1) {
+        //     printf(" AI CARAMBA ! \n");
+        //     exit(-1);
+        // }
+        // for (struct ifaddrs *ifa = interfaces ; ifa != NULL ; ifa = ifa->ifa_next) {
+        //     // printf("PPPOOOOOOPPPP \n");
+        //     if (ifa->ifa_addr->sa_family == socket.sa_family) {
+        //         if (ft_memcmp(ifa->ifa_addr, &socket, sizeof(struct sockaddr)) == 0)
+        //             printf("RESULT = %s\n", ifa->ifa_name);
+        //     }
+        // }
+
 
         // The interface name is hardcoded for now since I don't know how the real ping
         // find the interface address other than specified as an option.
-        ft_memcpy(ifr.ifr_ifrn.ifrn_name, "ens33\0", 6);
+        ft_memcpy(ifr.ifr_ifrn.ifrn_name, _IO_DEBIAN, 6);
         if (ioctl(sockfd, SIOCGIFADDR, &ifr) == -1)
             error_handle(0, "Fatal error while recovering network interface IP");
         if (inet_ntop(AF_INET, &((struct sockaddr_in*)&ifr.ifr_ifru.ifru_addr)->sin_addr, host_addr, INET_ADDRSTRLEN) == NULL)
             error_handle(0, "Fatal error, host ip is not valide");
         if (dest->addr_info->ai_canonname)
-            __PRINT_HEADER_BEG_IF(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size, host_addr, opt_data->opt_arg[_OPT_I])
+            __PRINT_HEADER_BEG_IF(dest->addr_info->ai_canonname, dest->addr_str, request->data_size, request->packet_size, host_addr, arg_data->interface)
         else
-            __PRINT_HEADER_BEG_IF(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size, host_addr, opt_data->opt_arg[_OPT_I])
+            __PRINT_HEADER_BEG_IF(dest->addr_orig, dest->addr_str, request->data_size, request->packet_size, host_addr, arg_data->interface)
     }
+    if (arg_data->verbose)
+        __PRINT_HEADER_VERBOSE(request->ident);
+    printf("\n");
 }
 
 void    print_sum(t_sum *sumup, t_host *dest) {

@@ -28,6 +28,7 @@
 #include <ifaddrs.h>
 
 #include <libft.h>
+#include <ft_opt.h>
 
 
 /////////////////////// Constants
@@ -36,14 +37,11 @@
 #endif
 
 #define _INET_FAM AF_INET
+#define _IO_DEBIAN "ens33\0"
 
 #define _IP_HDR_SIZE 20
 #define _ICMP_HDR_SIZE 8
 #define _PING_DATA_SIZE 56
-
-#define _OPT_MAX_NB 15
-#define _OPT_ARG_MAX_NB 11
-#define _OPT_DATA_LEN _OPT_MAX_NB + _OPT_ARG_MAX_NB
 
 #define _EX_NOERRNO -1
 
@@ -64,7 +62,7 @@ Options:\n\
     -m <mark>          tag the packets going out\n\
     -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>\n\
     -n                 no dns name resolution\n\
-    -w <deadline>      reply wait <deadline> in seconds\n\
+    -w <timeout>      reply wait <timeout> in seconds\n\
     -W <timeout>       time to wait for response\n\
     -p <pattern>       contents of padding byte\n\
     -Q <tclass>        use quality of service <tclass> bits\n\
@@ -83,12 +81,15 @@ IPv4 options:\n\
     printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%f ms\n", \
     recv_size, ip_addr, seq, ttl, ms); \
 
-#define __PRINT_HEADER_BEG(name_can, name_ip, data_size, packet_size) \
-    printf("PING %s (%s) %lu(%lu) bytes of data.\n", \
+#define __PRINT_HEADER_DATABYTE(name_can, name_ip, data_size, packet_size) \
+    printf("PING %s (%s) %lu(%lu) data bytes", \
     name_can, name_ip, data_size, packet_size); \
 
+#define __PRINT_HEADER_VERBOSE(indent) \
+    printf(", id 0x%04x = %u", indent, indent);
+
 #define __PRINT_HEADER_BEG_IF(name_can, name_ip, data_size, packet_size, ip_local, interface) \
-    printf("PING %s (%s) from %s %s: %lu(%lu) bytes of data.\n", \
+    printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
 #define __PRINT_SUM(name_canon, nb_sent, nb_recv, nb_errors, overall_time) \
@@ -105,43 +106,12 @@ IPv4 options:\n\
 #define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
     printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
 
-
 /////////////////////// Typedef
-
 typedef uint    ifa_flag_t;
 #define IFAFLAG_NULL 0
 
 
-/////////////////////// Enum
-/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
-typedef enum    e_opt_list {
-    _OPT_h,
-    _OPT_v,
-    _OPT_f,
-    _OPT_l, // <arg>
-    _OPT_I, // <arg>
-    _OPT_m, // <arg>
-    _OPT_M, // <arg>
-    _OPT_n,
-    _OPT_w, // <arg>
-    _OPT_W, // <arg>
-    _OPT_p, // <arg>
-    _OPT_Q, // <arg>
-    _OPT_S, // <arg>
-    _OPT_t, // <arg>
-    _OPT_T, // <arg>
-}               t_opt_e;
-
 /////////////////////// Structs
-typedef struct  s_opt_data {
-    bool            opt[_OPT_MAX_NB];
-    char            *opt_arg[_OPT_MAX_NB];
-    struct timeval  timeout;
-    int             deadline;
-    int             ttl;
-    int             sndbuf;
-}               t_opt_d;
-
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -183,6 +153,7 @@ typedef struct  s_icmp {
     size_t          packet_size;
     ssize_t         received_size;
     bool            is_packet;
+    uint16_t         ident;
 }               t_icmp;
 
 typedef struct  s_session_sum {
@@ -202,11 +173,10 @@ typedef struct  s_global_data {
     t_host          dest_spec;
     t_sum           session;
     int             sockfd;
-    t_opt_d         opt;
+    t_arg_d         args;
 }               t_global;
 
-
-    
+/////    
 /////////////////////// Global Variables
 extern t_global    g_data;
 
@@ -239,32 +209,28 @@ int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, cons
 // PRINT
 void        print_packet(const t_icmp *echo_request, const t_sum *session);
 void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
-void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_opt_d* const opt_data);
+void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_arg_d* const arg_data);
 void        print_sum(t_sum *sumup, t_host *dest);
 
 // DATA
 void        init_data(t_icmp *echo_request, t_sum *session);
 void        clean_data(t_icmp *echo_request);
-void        free_data(t_icmp *echo_request, t_opt_d *opt_data);
+void        free_data(t_icmp *echo_request);
 
 // SIGNAL HANDLER
 void        signal_handler(int sig);
 void        handle_tick();
 void        new_load();
+void        end_session(t_sum *session, t_host *dest);
 void        interrupt(int exit_nb);
 
 // TIME
 double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
 void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
 
-// OPTIONS
-void            opt_store(char *arr[], int arr_size, t_opt_d *opt_data, int *addr_pos);
-bool            get_opt(t_opt_e opt_value, t_opt_d *data);
-char            *get_opt_arg(t_opt_e opt_value, t_opt_d *data);
-void            opt_handle(t_opt_d *data);
 
 // SOCKET
-void            socket_init(int *sockfd, t_opt_d *opt_data);
+void            socket_init(int *sockfd, t_arg_d *arg_data);
 
 // LOOP
 void            loop_flood();
