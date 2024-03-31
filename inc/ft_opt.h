@@ -34,6 +34,7 @@ typedef enum  e_opt_error_num {
 // STRUCT
 typedef struct  s_arg_data {
     char            *arg_raw;
+    t_list          *args;
     bool            verbose;
     bool            help;
     int             count;

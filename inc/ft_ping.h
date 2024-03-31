@@ -112,6 +112,20 @@ typedef uint    ifa_flag_t;
 
 
 /////////////////////// Structs
+///
+
+typedef union   u_interfaces_id {
+    const char            *name_str;
+    struct sockaddr       *address;
+    struct sockaddr       *mask;
+}               t_ifid;
+
+typedef enum   e_interface_enum {
+    _IFE_NAME,
+    _IFE_ADDR,
+    _IFE_MASK
+}               t_ife;
+
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -131,109 +145,57 @@ typedef struct  s_host {
     char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
 
-typedef union   u_interfaces_id {
-    const char            *name_str;
-    struct sockaddr       *address;
-    struct sockaddr       *mask;
-}               t_ifid;
-
-typedef enum   e_interface_enum {
-    _IFE_NAME,
-    _IFE_ADDR,
-    _IFE_MASK
-}               t_ife;
-
 typedef struct  s_icmp {
     struct icmphdr  header;
     char            *data;
     size_t          data_size;
-    char            *datagram;
     size_t          datagram_size;
-    t_packet        *packet;
     size_t          packet_size;
     ssize_t         received_size;
-    bool            is_packet;
-    uint16_t         ident;
+    uint16_t        ident;
 }               t_icmp;
 
-typedef struct  s_session_sum {
-    uint16_t        seq_number;
-    size_t          recv_number;
-    size_t          err_number;
+typedef struct  s_sequence_sum {
+    t_packet        sent;
+    t_packet        recv;
+    ssize_t         recv_size;
+}               t_seq;
+
+struct s_time_metrics {
     double          time_delta;
     double          time_min;
     double          time_max;
     double          time_enlapsed;
     struct timeval  time_end;
     struct timeval  time_start;
+};
+
+typedef struct  s_session_sum {
+    t_host                  dest;
+    t_packet                packet;
+    t_seq                   sequence;
+    int                     sockfd;
+    uint16_t                pid;
+    size_t                  recv_number;
+    size_t                  err_number;
+    uint16_t                seq_number;
+    struct s_time_metrics   time;
 }               t_sum;
 
-typedef struct  s_global_data {
-    t_icmp          echo_request;
-    t_host          dest_spec;
-    t_sum           session;
-    int             sockfd;
-    t_arg_d         args;
-}               t_global;
-
-/////    
-/////////////////////// Global Variables
-extern t_global    g_data;
-
-// ICMP_CHECKSUM
-uint16_t    calculate_checksum_icmp(struct icmphdr header, const char *data, size_t size);
-uint16_t    calculate_checksum(const char *buffer, size_t size);
-
-// ERROR_HANDLING
-int         error_handle(int errnum, char *err_value);
-void        error_gai_handle(char *input, int8_t ec);
-
-// HOST
-void        host_lookup(char *raw_addr, t_host *host, bool do_resolution);
-void        host_get_ip(struct sockaddr *addr_buff);
-
-// INTERFACE
-int         interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
-int         interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
-
-// VERIFY
-int         verify_ip_header(const struct ip *reception);
-int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
-
-// RECEIVE
-int         receive_data(int sockfd, t_icmp *echo_request, t_sum *session);
-
-// ICMP_DATAGRAM
-int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session);
-
-// PRINT
-void        print_packet(const t_icmp *echo_request, const t_sum *session);
-void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
-void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_arg_d* const arg_data);
-void        print_sum(t_sum *sumup, t_host *dest);
-
-// DATA
-void        init_data(t_icmp *echo_request, t_sum *session);
-void        clean_data(t_icmp *echo_request);
-void        free_data(t_icmp *echo_request);
-
-// SIGNAL HANDLER
-void        signal_handler(int sig);
-void        handle_tick();
-void        new_load();
-void        end_session(t_sum *session, t_host *dest);
-void        interrupt(int exit_nb);
-
-// TIME
-double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
-void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
+typedef struct  s_ping {
+    t_arg_d     args;
+    t_sum       session;
+    t_icmp      template;
+    uint16_t    pid;
+}               t_ping;
 
 
-// SOCKET
-void            socket_init(int *sockfd, t_arg_d *arg_data);
+int     error_handle(int errnum, char *err_value);
+void    error_gai_handle(char *input, int8_t ec);
 
-// LOOP
-void            loop_flood();
-void            loop_classic();
+int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
+int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
+
+extern t_ping    g_ping;
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

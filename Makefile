@@ -15,22 +15,22 @@ LDLIBS := -lft
 
 
 SRCS := ft_ping.c \
-	icmp_datagram.c \
-	icmp_checksum.c \
 	error_handling.c \
-	verify_header.c \
-	receive.c \
-	print.c \
-	data.c \
-	signal_handler.c \
-	get_time.c \
-	host.c \
+	interface.c \
 	options.c \
 	options_check.c \
-	options_error.c \
-	socket.c \
-	loop.c \
-	interface.c
+	options_error.c
+	# icmp_datagram.c \
+	# icmp_checksum.c \
+	# verify_header.c \
+	# receive.c \
+	# print.c \
+	# data.c \
+	# signal_handler.c \
+	# get_time.c \
+	# host.c \
+	# socket.c \
+	# loop.c
 OBJS := $(SRCS:%.c=%.o)
 
 SRC_PATH := $(addprefix $(SRC_DIR)/,$(SRCS))
