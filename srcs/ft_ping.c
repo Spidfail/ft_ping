@@ -68,6 +68,9 @@ int main(int ac, char *av[]) {
         printf("SESSION HOST = %s\n", active_s->dest.addr_orig);
         printf("SESSION PACKET TYPE = %i\n", active_s->packet.icmp_hdr.type);
 
+        int rtn = packet_send(active_s->sockfd, &(active_s->dest), &(active_s->packet));
+        printf(" RTN = %i\n", rtn);
+
         // start_timer()
         // start_timeout()
         

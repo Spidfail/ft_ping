@@ -1,9 +1,4 @@
-#include "libft.h"
 #include <ft_ping.h>
-#include <netinet/ip_icmp.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 
 /// Create a checksum by adding 2 octets by 2 octets successively.
 /// For this reaser, buffer has to be casted in `uint16_t *`
@@ -24,7 +19,7 @@ uint16_t            packet_checksum_calculate(const char *buffer, size_t size) {
     return ~sum;
 }
 
-int                 packet_send(int sockfd, t_host *dest, const t_sum *session) {
+int                 packet_send(int sockfd, const t_host *dest, const t_packet *packet) {
     ssize_t         rtn = 0;
     char            *to_send = NULL;
     size_t          size_hdr = sizeof(struct icmphdr);
@@ -32,11 +27,12 @@ int                 packet_send(int sockfd, t_host *dest, const t_sum *session) 
     to_send = ft_calloc(1, size_hdr + _PING_DATA_SIZE);
     if (to_send == NULL)
         return -1;
-    ft_memcpy(to_send, &(session->packet.icmp_hdr), size_hdr);
-    ft_memcpy(to_send + size_hdr, &(session->packet.data), _PING_DATA_SIZE);
+    ft_memcpy(to_send, &(packet->icmp_hdr), size_hdr);
+    ft_memcpy(to_send + size_hdr, &(packet->data), _PING_DATA_SIZE);
 
     rtn = sendto(sockfd, to_send, size_hdr + _PING_DATA_SIZE,
                  0, dest->addr_info->ai_addr, dest->addr_info->ai_addrlen);
+    free(to_send);
     if (rtn == -1)
         return -1;
     return rtn;

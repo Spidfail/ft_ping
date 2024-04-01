@@ -193,7 +193,7 @@ t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *
 // void     session_print_sum(t_sum *session);
 // void     session_end(t_list **sessions);
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
-int         packet_send(int sockfd, t_host *dest, const t_sum *session);
+int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 
 void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);

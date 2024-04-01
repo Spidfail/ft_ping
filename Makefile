@@ -22,9 +22,8 @@ SRCS := ft_ping.c \
 	options_error.c \
 	session.c \
 	host.c \
-	socket.c
-	# icmp_datagram.c \
-	# icmp_checksum.c \
+	socket.c \
+	icmp_datagram.c
 	# verify_header.c \
 	# receive.c \
 	# print.c \
