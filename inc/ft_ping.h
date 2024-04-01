@@ -145,6 +145,7 @@ typedef struct  s_host {
     char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
 
+// Quite useless actually
 typedef struct  s_icmp {
     struct icmphdr  header;
     char            *data;
@@ -171,6 +172,7 @@ struct s_time_metrics {
 };
 
 typedef struct  s_session_sum {
+    bool                    active;
     t_host                  dest;
     t_packet                packet;
     t_seq                   sequence;
@@ -184,7 +186,7 @@ typedef struct  s_session_sum {
 
 typedef struct  s_ping {
     t_arg_d     args;
-    t_sum       session;
+    t_list      *session;
     t_icmp      template;
     uint16_t    pid;
 }               t_ping;
@@ -195,6 +197,20 @@ void    error_gai_handle(char *input, int8_t ec);
 
 int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
 int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
+
+// void    signal_handler(int sig);
+
+t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, const t_icmp *template);
+t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_icmp *template, const t_arg_d *args_data);
+// void    session_print_sum(t_sum *session);
+// void    session_end(t_list **sessions);
+
+void    host_lookup(t_host *host, char *raw_addr, bool do_resolution);
+void    host_get_ip(struct sockaddr *addr_buff);
+
+int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
+
+void    interrupt(int exit_nb);
 
 extern t_ping    g_ping;
 

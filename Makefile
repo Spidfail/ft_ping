@@ -19,7 +19,11 @@ SRCS := ft_ping.c \
 	interface.c \
 	options.c \
 	options_check.c \
-	options_error.c
+	options_error.c \
+	libping.c \
+	session.c \
+	host.c \
+	socket.c
 	# icmp_datagram.c \
 	# icmp_checksum.c \
 	# verify_header.c \

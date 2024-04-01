@@ -38,8 +38,6 @@ static void     arg_handle(t_arg_d *data, int ac, char *av[]) {
 }
 
 // static int      init_signals() {
-//     if (signal(SIGINT, signal_handler) == SIG_ERR)
-//         return -1;
 //     return 0;
 // }
 
@@ -64,17 +62,6 @@ void    icmp_init(t_icmp *template, uint16_t pid) {
         error_handle(0, "Failed to allocate data");
 }
 
-void    session_init(t_sum *session, uint16_t pid, char *host, const t_icmp *template) {
-    session->pid = pid;
-    session->seq_number = 0;
-    session->time.time_min = DBL_MAX;
-    session->time.time_max = DBL_MIN;
-    (void)host;
-    (void)template;
-    // Init host
-    // Init socket
-    // Init packet
-}
 
 int main(int ac, char *av[]) {
     ft_bzero(&g_ping, sizeof(t_ping));
@@ -82,10 +69,16 @@ int main(int ac, char *av[]) {
 
     g_ping.pid = getpid();
     icmp_init(&(g_ping.template), g_ping.pid);
-    for (t_list *link = g_ping.args.args ; link ; link = link->next ) {
-        session_init(&(g_ping.session), g_ping.pid, link->content, &(g_ping.template));
+    // if (signal(SIGINT, signal_handler) == SIG_ERR)
+    //     return -1;
+    g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.template), &(g_ping.args));
+    if (g_ping.session == NULL)
+        error_handle(-1, "Error while initializing sessions");
 
-        // signal_init()
+    for (t_list *link = g_ping.session ; link ; link = link->next ) {
+        t_sum   *active_s = link->content;
+        printf("SESSION HOST = %s\n", active_s->dest.addr_orig);
+
         // start_timer()
         // start_timeout()
         
