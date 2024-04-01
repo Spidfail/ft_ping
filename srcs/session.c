@@ -2,7 +2,7 @@
 #include <ft_ping.h>
 #include <stdlib.h>
 
-t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, const t_icmp *template) {
+t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
     
     if (new_session == NULL)
@@ -11,14 +11,13 @@ t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, const t_icmp *te
     new_session->seq_number = 0;
     new_session->time.time_min = DBL_MAX;
     new_session->time.time_max = DBL_MIN;
-    (void)template;
     new_session->sockfd = sockfd;
     host_lookup(&(new_session->dest), raw_addr, true);
     // Init packet
     return new_session;
 }
 
-t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_icmp *template, const t_arg_d *args_data) {
+t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data) {
     t_list *sessions = NULL;
 
     for (const t_list *tmp = hosts ; tmp ; tmp = tmp->next) {
@@ -27,7 +26,7 @@ t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_icmp *templ
         int     sockfd = 0;
 
         sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, args_data);
-        new = session_new(pid, sockfd, tmp->content, template);
+        new = session_new(pid, sockfd, tmp->content);
         if (new == NULL)
             return NULL;
         link = ft_lstnew(new);

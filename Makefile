@@ -20,7 +20,6 @@ SRCS := ft_ping.c \
 	options.c \
 	options_check.c \
 	options_error.c \
-	libping.c \
 	session.c \
 	host.c \
 	socket.c

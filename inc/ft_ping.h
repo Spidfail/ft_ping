@@ -145,17 +145,6 @@ typedef struct  s_host {
     char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
 
-// Quite useless actually
-typedef struct  s_icmp {
-    struct icmphdr  header;
-    char            *data;
-    size_t          data_size;
-    size_t          datagram_size;
-    size_t          packet_size;
-    ssize_t         received_size;
-    uint16_t        ident;
-}               t_icmp;
-
 typedef struct  s_sequence_sum {
     t_packet        sent;
     t_packet        recv;
@@ -187,7 +176,6 @@ typedef struct  s_session_sum {
 typedef struct  s_ping {
     t_arg_d     args;
     t_list      *session;
-    t_icmp      template;
     uint16_t    pid;
 }               t_ping;
 
@@ -200,8 +188,8 @@ int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_
 
 // void    signal_handler(int sig);
 
-t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, const t_icmp *template);
-t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_icmp *template, const t_arg_d *args_data);
+t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr);
+t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
 // void    session_print_sum(t_sum *session);
 // void    session_end(t_list **sessions);
 

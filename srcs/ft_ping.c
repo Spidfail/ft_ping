@@ -52,26 +52,14 @@ void    packet_cpy(t_packet *target, const t_packet *source) {
     ft_memcpy(&(target->ip_hdr), &(source->ip_hdr), sizeof(struct iphdr));
 }
 
-void    icmp_init(t_icmp *template, uint16_t pid) {
-    template->ident = pid & 0xFFFF;
-    template->data_size = _PING_DATA_SIZE;
-    template->datagram_size = _ICMP_HDR_SIZE + template->data_size;
-    template->packet_size = _IP_HDR_SIZE + template->datagram_size;
-    template->data = ft_calloc(1, template->data_size);
-    if (!template->data)
-        error_handle(0, "Failed to allocate data");
-}
-
-
 int main(int ac, char *av[]) {
     ft_bzero(&g_ping, sizeof(t_ping));
     arg_handle(&(g_ping.args), ac, av);
 
     g_ping.pid = getpid();
-    icmp_init(&(g_ping.template), g_ping.pid);
     // if (signal(SIGINT, signal_handler) == SIG_ERR)
     //     return -1;
-    g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.template), &(g_ping.args));
+    g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.args));
     if (g_ping.session == NULL)
         error_handle(-1, "Error while initializing sessions");
 
