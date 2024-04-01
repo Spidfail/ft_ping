@@ -146,9 +146,10 @@ typedef struct  s_host {
 }               t_host;
 
 typedef struct  s_sequence_sum {
-    t_packet        sent;
-    t_packet        recv;
-    ssize_t         recv_size;
+    const t_packet      *send;
+    t_packet            recv;
+    t_host              sender;
+    ssize_t             recv_size;
 }               t_seq;
 
 struct s_time_metrics {
@@ -192,8 +193,10 @@ t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagr
 t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
 // void     session_print_sum(t_sum *session);
 // void     session_end(t_list **sessions);
+
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
+int         packet_receive(int sockfd, t_seq *sequence);
 
 void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);

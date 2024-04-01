@@ -1,14 +1,5 @@
-#include "ft_opt.h"
-#include "libft.h"
 #include <ft_opt.h>
-#include <errno.h>
 #include <ft_ping.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <signal.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <unistd.h>
 
 t_ping    g_ping = {0};
 const char *argp_program_bug_address = _OPT_ARGP_BUG_ADDR;
@@ -52,7 +43,34 @@ void    packet_cpy(t_packet *target, const t_packet *source) {
     ft_memcpy(&(target->ip_hdr), &(source->ip_hdr), sizeof(struct iphdr));
 }
 
-int main(int ac, char *av[]) {
+void    sequence_init(t_seq *sequence, const t_packet *to_send) {
+    sequence->send = to_send;
+    sequence->recv_size = 0;
+    sequence->sender.addr_info = ft_calloc(1, sizeof(struct addrinfo));
+    if (sequence->sender.addr_info == NULL)
+        error_handle(0, "Fatal: Failed to allocate addrinfo");
+    sequence->sender.addr_info->ai_addrlen = 100;
+    sequence->sender.addr_info->ai_addr = ft_calloc(1, sequence->sender.addr_info->ai_addrlen);
+    if (sequence->sender.addr_info->ai_addr == NULL)
+        error_handle(0, "Fatal: Failed to allocate sockaddr");
+}
+
+void    sequence_deinit(t_seq *sequence) {
+   free(sequence->sender.addr_info->ai_addr);
+   free(sequence->sender.addr_info);
+   bzero(sequence, sizeof(t_seq));
+}
+
+int     packet_receive(int sockfd, t_seq *sequence) {
+    return recvfrom(sockfd,
+        &sequence->recv,
+         sizeof(t_packet),
+         0, 
+         sequence->sender.addr_info->ai_addr,
+         &(sequence->sender.addr_info->ai_addrlen));
+}
+
+int     main(int ac, char *av[]) {
     ft_bzero(&g_ping, sizeof(t_ping));
     arg_handle(&(g_ping.args), ac, av);
 
@@ -64,12 +82,18 @@ int main(int ac, char *av[]) {
         error_handle(-1, "Error while initializing sessions");
 
     for (t_list *link = g_ping.session ; link ; link = link->next ) {
-        t_sum   *active_s = link->content;
-        printf("SESSION HOST = %s\n", active_s->dest.addr_orig);
-        printf("SESSION PACKET TYPE = %i\n", active_s->packet.icmp_hdr.type);
+        t_sum   *session = link->content;
+        printf("SESSION HOST = %s\n", session->dest.addr_orig);
+        printf("SESSION PACKET TYPE = %i\n", session->packet.icmp_hdr.type);
 
-        int rtn = packet_send(active_s->sockfd, &(active_s->dest), &(active_s->packet));
+        // New sequence
+        t_seq   *sequence = &(session->sequence);
+        sequence_init(sequence, &(session->packet));
+        int rtn = packet_send(session->sockfd, &(session->dest), sequence->send);
         printf(" RTN = %i\n", rtn);
+        sequence_deinit(sequence);
+        
+        
 
         // start_timer()
         // start_timeout()
