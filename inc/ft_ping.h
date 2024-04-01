@@ -188,13 +188,18 @@ int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_
 
 // void    signal_handler(int sig);
 
-t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr);
-t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
-// void    session_print_sum(t_sum *session);
-// void    session_end(t_list **sessions);
+t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
+t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
+// void     session_print_sum(t_sum *session);
+// void     session_end(t_list **sessions);
+uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
+int         packet_send(int sockfd, t_host *dest, const t_sum *session);
 
-void    host_lookup(t_host *host, char *raw_addr, bool do_resolution);
-void    host_get_ip(struct sockaddr *addr_buff);
+void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
+void        host_get_ip(struct sockaddr *addr_buff);
+
+void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
+uint16_t    ping_datagram_checksum(struct icmphdr header, const char *data, size_t size);
 
 int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
 

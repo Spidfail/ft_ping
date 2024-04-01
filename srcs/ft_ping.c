@@ -66,6 +66,7 @@ int main(int ac, char *av[]) {
     for (t_list *link = g_ping.session ; link ; link = link->next ) {
         t_sum   *active_s = link->content;
         printf("SESSION HOST = %s\n", active_s->dest.addr_orig);
+        printf("SESSION PACKET TYPE = %i\n", active_s->packet.icmp_hdr.type);
 
         // start_timer()
         // start_timeout()

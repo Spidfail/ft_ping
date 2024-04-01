@@ -1,19 +1,22 @@
 #include "ft_opt.h"
 #include <ft_ping.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <strings.h>
 
-t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr) {
+t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
     
     if (new_session == NULL)
         return NULL;
     new_session->pid = pid;
+    new_session->sockfd = sockfd;
     new_session->seq_number = 0;
+    host_lookup(&(new_session->dest), raw_addr, true);
     new_session->time.time_min = DBL_MAX;
     new_session->time.time_max = DBL_MIN;
-    new_session->sockfd = sockfd;
-    host_lookup(&(new_session->dest), raw_addr, true);
-    // Init packet
+    // Init icmp datagram only. The IP header is generated automatically when using `sendto()`, based on socket options.
+    (*datagram_generate)(&new_session->packet, new_session->seq_number);
     return new_session;
 }
 
@@ -26,7 +29,7 @@ t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args
         int     sockfd = 0;
 
         sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, args_data);
-        new = session_new(pid, sockfd, tmp->content);
+        new = session_new(pid, sockfd, tmp->content, ping_datagram_generate);
         if (new == NULL)
             return NULL;
         link = ft_lstnew(new);
