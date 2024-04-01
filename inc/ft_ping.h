@@ -202,7 +202,7 @@ void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);
 
 void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
-uint16_t    ping_datagram_checksum(struct icmphdr header, const char *data, size_t size);
+uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
 int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
 

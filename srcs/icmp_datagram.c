@@ -38,7 +38,7 @@ int                 packet_send(int sockfd, const t_host *dest, const t_packet *
     return rtn;
 }
 
-uint16_t            ping_datagram_checksum(struct icmphdr header, const char *data, size_t size) {
+uint16_t            ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size) {
     uint16_t    checksum = 0;
     // Allocating to be sure to get the right size.
     char        *buff = ft_calloc(1, _ICMP_HDR_SIZE + size);
@@ -46,7 +46,7 @@ uint16_t            ping_datagram_checksum(struct icmphdr header, const char *da
     if (buff == NULL)
         error_handle(0, "Failed to allocate data buffer");
     // Fill the first part with the icmp header struct
-    ft_memcpy(buff, &header, _ICMP_HDR_SIZE);
+    ft_memcpy(buff, header, _ICMP_HDR_SIZE);
     // Fill the rest with the data buffer
     ft_memcpy(buff + _ICMP_HDR_SIZE, data, size);
     checksum = packet_checksum_calculate(buff, size);
@@ -70,7 +70,7 @@ static void        ping_fill_header_icmp(struct icmphdr *header, char *data, siz
     header->checksum = 0; // Making sure the checksum is not set
     header->un.echo.id = getuid();
     header->un.echo.sequence = seq_number;
-    header->checksum = ping_datagram_checksum(*header, data, data_size);
+    header->checksum = ping_datagram_checksum(header, data, data_size);
 }
 
 void                ping_datagram_generate(t_packet *packet, uint16_t seq_number) {

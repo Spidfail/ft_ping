@@ -1,4 +1,3 @@
-#include <ft_opt.h>
 #include <ft_ping.h>
 
 t_ping    g_ping = {0};
@@ -70,6 +69,26 @@ int     packet_receive(int sockfd, t_seq *sequence) {
          &(sequence->sender.addr_info->ai_addrlen));
 }
 
+static int     packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code) {
+    if (sequence->recv.icmp_hdr.type != type && sequence->recv.icmp_hdr.code != code)
+        return EXIT_FAILURE;
+
+    struct icmphdr  hdr_tmp = sequence->send->icmp_hdr;
+    struct ip       ip_tmp = sequence->recv.ip_hdr;
+    unsigned short  ip_checksum = 0; 
+
+    hdr_tmp.type = 0;
+    hdr_tmp.checksum = 0;
+    ip_tmp.ip_sum = 0;
+    hdr_tmp.checksum = ping_datagram_checksum(&hdr_tmp, sequence->send->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
+    ip_checksum = packet_checksum_calculate((char*)&ip_tmp, _IP_HDR_SIZE);
+    if (memcmp(&hdr_tmp, &sequence->recv.icmp_hdr, _ICMP_HDR_SIZE) != 0)
+        return EXIT_FAILURE;
+    if (ip_checksum != sequence->recv.ip_hdr.ip_sum)
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
+}
+
 int     main(int ac, char *av[]) {
     ft_bzero(&g_ping, sizeof(t_ping));
     arg_handle(&(g_ping.args), ac, av);
@@ -91,6 +110,10 @@ int     main(int ac, char *av[]) {
         sequence_init(sequence, &(session->packet));
         int rtn = packet_send(session->sockfd, &(session->dest), sequence->send);
         printf(" RTN = %i\n", rtn);
+        rtn = packet_receive(session->sockfd, sequence);
+        printf(" RTN RECV = %i\n", rtn);
+        rtn = packet_verify_headers(sequence, ICMP_ECHOREPLY, 0);
+        printf(" RTN VERIFY HEADERS = %i\n", rtn);
         sequence_deinit(sequence);
         
         
