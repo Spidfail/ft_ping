@@ -1,4 +1,12 @@
 #include <ft_ping.h>
+#include <string.h>
+
+char    *error_icmp_mapping(int type, int code) {
+    for (int i = 0 ; i < ICMP_ERROR_MAXNB ; ++i)
+        if (g_icmp_error[i].type == type && g_icmp_error[i].code == code)
+            return g_icmp_error[i].description;
+    return NULL;
+}
 
 int error_handle(int errnum, char *err_value) {
     switch (errnum) {

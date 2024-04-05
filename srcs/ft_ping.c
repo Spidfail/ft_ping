@@ -114,6 +114,10 @@ int     main(int ac, char *av[]) {
         printf(" RTN RECV = %i\n", rtn);
         rtn = packet_verify_headers(sequence, ICMP_ECHOREPLY, 0);
         printf(" RTN VERIFY HEADERS = %i\n", rtn);
+        if (rtn == EXIT_FAILURE)
+            printf(" ERROR CODE = %i || TYPE = %i || MESSAGE = %s\n", sequence->recv.icmp_hdr.code, sequence->recv.icmp_hdr.type, error_icmp_mapping(sequence->recv.icmp_hdr.type, sequence->recv.icmp_hdr.code));
+        else
+            printf(" GOOD CODE = %i\n", sequence->recv.icmp_hdr.code);
         sequence_deinit(sequence);
         
         

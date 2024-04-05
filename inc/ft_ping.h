@@ -81,6 +81,10 @@ IPv4 options:\n\
     printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%f ms\n", \
     recv_size, ip_addr, seq, ttl, ms); \
 
+#define __PRINT_PACKET_ERROR(recv_size, ip_addr, error_description) \
+    printf("%lu bytes from %s: %s\n", \
+    recv_size, ip_addr, error_description); \
+
 #define __PRINT_HEADER_DATABYTE(name_can, name_ip, data_size, packet_size) \
     printf("PING %s (%s) %lu(%lu) data bytes", \
     name_can, name_ip, data_size, packet_size); \
@@ -105,6 +109,36 @@ IPv4 options:\n\
     
 #define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
     printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
+
+/////////////////////// ERROR CODES
+
+typedef struct   s_recv_error_type_code {
+    int type;
+    int code;
+    char *description;
+}               t_recv_error;
+
+#define ICMP_ERROR_MAXNB 17
+static t_recv_error     g_icmp_error[18] = {
+    {ICMP_DEST_UNREACH, ICMP_NET_UNREACH, "Destination Net Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, "Destination Host Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_PROT_UNREACH, "Destination Protocol Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, "Destination Port Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED, "Fragmentation needed and DF set"},
+    {ICMP_DEST_UNREACH, ICMP_SR_FAILED, "Source Route Failed"},
+    {ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN, "Network Unknown"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNKNOWN, "Host Unknown"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_ISOLATED, "Host Isolated"},
+    {ICMP_DEST_UNREACH, ICMP_NET_UNR_TOS, "Destination Network Unreachable At This TOS"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNR_TOS, "Destination Host Unreachable At This TOS"},
+    {ICMP_REDIRECT, ICMP_REDIR_NET, "Redirect Network"},
+    {ICMP_REDIRECT, ICMP_REDIR_HOST, "Redirect Host"},
+    {ICMP_REDIRECT, ICMP_REDIR_NETTOS, "Redirect Type of Service and Network"},
+    {ICMP_REDIRECT, ICMP_REDIR_HOSTTOS, "Redirect Type of Service and Host"},
+    {ICMP_TIME_EXCEEDED, ICMP_EXC_TTL, "Time to live exceeded"},
+    {ICMP_TIME_EXCEEDED, ICMP_EXC_FRAGTIME, "Frag reassembly time exceeded"},
+    { 0 }
+};
 
 /////////////////////// Typedef
 typedef uint    ifa_flag_t;
@@ -183,6 +217,7 @@ typedef struct  s_ping {
 
 int     error_handle(int errnum, char *err_value);
 void    error_gai_handle(char *input, int8_t ec);
+char    *error_icmp_mapping(int type, int code);
 
 int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
 int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
