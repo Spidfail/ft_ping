@@ -184,15 +184,13 @@ typedef struct  s_sequence_sum {
     t_packet            recv;
     t_host              sender;
     ssize_t             recv_size;
+    double              time_enlapsed_ms;
 }               t_seq;
 
 struct s_time_metrics {
     double          time_delta;
     double          time_min;
     double          time_max;
-    double          time_enlapsed;
-    struct timeval  time_end;
-    struct timeval  time_start;
 };
 
 typedef struct  s_session_sum {
