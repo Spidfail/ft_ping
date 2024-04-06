@@ -36,12 +36,6 @@ static void     arg_handle(t_arg_d *data, int ac, char *av[]) {
 // }
 //
 
-void    packet_cpy(t_packet *target, const t_packet *source) {
-    ft_memcpy(target->data, source->data, _PING_DATA_SIZE);
-    ft_memcpy(&(target->icmp_hdr), &(source->icmp_hdr), sizeof(struct icmphdr));
-    ft_memcpy(&(target->ip_hdr), &(source->ip_hdr), sizeof(struct iphdr));
-}
-
 void    sequence_init(t_seq *sequence, const t_packet *to_send) {
     sequence->send = to_send;
     sequence->recv_size = 0;
@@ -58,35 +52,6 @@ void    sequence_deinit(t_seq *sequence) {
    free(sequence->sender.addr_info->ai_addr);
    free(sequence->sender.addr_info);
    bzero(sequence, sizeof(t_seq));
-}
-
-int     packet_receive(int sockfd, t_seq *sequence) {
-    return recvfrom(sockfd,
-        &sequence->recv,
-         sizeof(t_packet),
-         0, 
-         sequence->sender.addr_info->ai_addr,
-         &(sequence->sender.addr_info->ai_addrlen));
-}
-
-static int     packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code) {
-    if (sequence->recv.icmp_hdr.type != type && sequence->recv.icmp_hdr.code != code)
-        return EXIT_FAILURE;
-
-    struct icmphdr  hdr_tmp = sequence->send->icmp_hdr;
-    struct ip       ip_tmp = sequence->recv.ip_hdr;
-    unsigned short  ip_checksum = 0; 
-
-    hdr_tmp.type = 0;
-    hdr_tmp.checksum = 0;
-    ip_tmp.ip_sum = 0;
-    hdr_tmp.checksum = ping_datagram_checksum(&hdr_tmp, sequence->send->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
-    ip_checksum = packet_checksum_calculate((char*)&ip_tmp, _IP_HDR_SIZE);
-    if (memcmp(&hdr_tmp, &sequence->recv.icmp_hdr, _ICMP_HDR_SIZE) != 0)
-        return EXIT_FAILURE;
-    if (ip_checksum != sequence->recv.ip_hdr.ip_sum)
-        return EXIT_FAILURE;
-    return EXIT_SUCCESS;
 }
 
 int     main(int ac, char *av[]) {
@@ -110,14 +75,9 @@ int     main(int ac, char *av[]) {
         sequence_init(sequence, &(session->packet));
         int rtn = packet_send(session->sockfd, &(session->dest), sequence->send);
         printf(" RTN = %i\n", rtn);
-        rtn = packet_receive(session->sockfd, sequence);
-        printf(" RTN RECV = %i\n", rtn);
+        sequence->recv_size = packet_receive(session->sockfd, sequence);
         rtn = packet_verify_headers(sequence, ICMP_ECHOREPLY, 0);
-        printf(" RTN VERIFY HEADERS = %i\n", rtn);
-        if (rtn == EXIT_FAILURE)
-            printf(" ERROR CODE = %i || TYPE = %i || MESSAGE = %s\n", sequence->recv.icmp_hdr.code, sequence->recv.icmp_hdr.type, error_icmp_mapping(sequence->recv.icmp_hdr.type, sequence->recv.icmp_hdr.code));
-        else
-            printf(" GOOD CODE = %i\n", sequence->recv.icmp_hdr.code);
+        packet_print(sequence, 0.0);
         sequence_deinit(sequence);
         
         
