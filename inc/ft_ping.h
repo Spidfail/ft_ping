@@ -191,6 +191,8 @@ struct s_time_metrics {
     double          time_delta;
     double          time_min;
     double          time_max;
+    struct timeval  time_start;
+    struct timeval  time_end;
 };
 
 typedef struct  s_session_sum {
@@ -228,8 +230,8 @@ int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_
 
 t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
 t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
-// void     session_print_sum(t_sum *session);
-// void     session_end(t_list **sessions);
+t_list      *session_end(t_list **sessions);
+void        session_print_sum(t_sum *session);
 
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);

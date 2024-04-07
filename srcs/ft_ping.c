@@ -60,10 +60,6 @@ void    sequence_clean(t_seq *sequence) {
     bzero(&sequence->time_enlapsed_ms, sizeof(time_t));
 }
 
-double    calculate_enlapsed_ms(const struct timeval *timeout, time_t max_scd) {
-    return (double)(max_scd * 1000000 - timeout->tv_usec) / (double)1000;
-}
-
 void            signal_handler(int sig) {
     switch (sig) {
         case SIGINT :
@@ -72,6 +68,11 @@ void            signal_handler(int sig) {
         default:
             error_handle(-1, "Error: unexpected signal\n");
     }
+}
+
+void           start_timer(struct timeval *timer) {
+    if (gettimeofday(timer, NULL) == -1)
+        error_handle(0, "Error while gettin' start time");
 }
 
 
@@ -87,7 +88,8 @@ int     main(int ac, char *av[]) {
     if (signal(SIGINT, signal_handler) == SIG_ERR)
         error_handle(-1, "Error while using signal");
 
-    for (t_list *link = g_ping.session ; link ; link = link->next ) {
+    t_list *link = g_ping.session;
+    while (link) {
         t_sum           *session = link->content;
         t_seq           *sequence = &(session->sequence);
         fd_set          sequence_set;
@@ -97,6 +99,7 @@ int     main(int ac, char *av[]) {
         
         timeout.tv_sec = wait_scd;
         sequence_init(sequence, &(session->packet));
+        start_timer(&(session->time.time_start));
         if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
             error_handle(-1, "Impossible to send the packet");
 
@@ -126,7 +129,7 @@ int     main(int ac, char *av[]) {
             else if (FD_ISSET(session->sockfd, &sequence_set)) {
                 printf("FD ready\n");
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
-                sequence->time_enlapsed_ms = calculate_enlapsed_ms(&timeout, wait_scd);
+                sequence->time_enlapsed_ms = (double)(wait_scd * 1000000 - timeout.tv_usec) / (double)1000;
                 if (packet_verify_headers(sequence, ICMP_ECHOREPLY, 0))
                     session->err_number++;
                 packet_print(sequence, sequence->time_enlapsed_ms);
@@ -135,6 +138,6 @@ int     main(int ac, char *av[]) {
         }
         fprintf(stderr, "sequence deinit\n");
         sequence_deinit(sequence);
-        // TODO: print session
+        link = session_end(&g_ping.session);
     }
 }

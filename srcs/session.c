@@ -1,5 +1,7 @@
 #include "ft_opt.h"
+#include "libft.h"
 #include <ft_ping.h>
+#include <netdb.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -42,37 +44,61 @@ t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args
     return sessions;
 }
 
-// void    session_print_sum(t_sum *session) {
-//     // Calculate the enlapsed time at the end to avoid
-//     // making a calcul at each turn.
-//     if (session->dest.addr_info == NULL)
-//         return ;
-//     if (session->dest.addr_info->ai_canonname) {
-//         __PRINT_SUM(session->dest.addr_info->ai_canonname,
-//             session->seq_number,
-//             session->recv_number,
-//             session->err_number,
-//             get_enlapsed_ms(&session->time.time_start, &session->time.time_end))
-//     }
-//     else {
-//         __PRINT_SUM(dest->addr_orig,
-//             session->seq_number,
-//             session->recv_number,
-//             session->err_number,
-//             get_enlapsed_ms(&session->time.time_start, &session->time.time_end))
-//     }
-//     if (session->recv_number > 3)
-//         __PRINT_RTT(session->time.time_min,
-//             session->time.time_delta,
-//             session->time.time_max,
-//             session->recv_number)
-// }
+double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end) {
+    return (((double)end->tv_sec - (double)start->tv_sec) * 1000)
+        + (((double)end->tv_usec - (double)start->tv_usec) / 1000);
+}
 
-// void    session_end(t_list **sessions) {
-//     for (t_list *)
-//     if (session->time.time_end.tv_sec == 0 && session->time.time_end.tv_usec == 0)
-//         if (gettimeofday(&(session->time.time_end), NULL) == -1)
-//             error_handle(0, "Error while gettin' end time");
-//     session_print_sum(session);
-//     interrupt(0);
-// }
+void    session_print_sum(t_sum *session) {
+    // Calculate the enlapsed time at the end to avoid
+    // making a calcul at each turn.
+    double  enlapsed = 0;
+    
+    printf("TIME START: %f, %f\n", (double)session->time.time_start.tv_sec, (double)session->time.time_start.tv_usec);
+    printf("TIME END: %f, %f\n", (double)session->time.time_end.tv_sec, (double)session->time.time_end.tv_usec);
+    
+    if (!(session->time.time_start.tv_sec == 0 || session->time.time_start.tv_usec == 0
+            || session->time.time_end.tv_sec == 0 || session->time.time_end.tv_usec == 0))
+        enlapsed = timer_enlapsed_ms(&(session->time.time_start), &(session->time.time_end));
+
+    if (session->dest.addr_info == NULL)
+        return ;
+    if (session->dest.addr_info->ai_canonname) {
+        __PRINT_SUM(session->dest.addr_info->ai_canonname,
+            session->seq_number,
+            session->recv_number,
+            session->err_number,
+            enlapsed)
+    }
+    else {
+        __PRINT_SUM(session->dest.addr_orig,
+            session->seq_number,
+            session->recv_number,
+            session->err_number,
+            enlapsed)
+    }
+    if (session->recv_number > 3)
+        __PRINT_RTT(session->time.time_min,
+            session->time.time_delta,
+            session->time.time_max,
+            session->recv_number)
+}
+
+static void      session_deinit(void *data) {
+    t_sum   *session = data;
+    freeaddrinfo(session->dest.addr_info);
+    free(session);
+}
+
+t_list      *session_end(t_list **sessions) {
+    t_sum   *session = (*sessions)->content;
+    t_list  *next = (*sessions)->next;
+    
+    if (session->time.time_end.tv_sec == 0 && session->time.time_end.tv_usec == 0)
+        if (gettimeofday(&(session->time.time_end), NULL) == -1)
+            error_handle(0, "Error while gettin' end time");
+    // session_print_sum(session);
+    ft_lstdelone(*sessions, &session_deinit);
+    *sessions = next;
+    return next;
+}
