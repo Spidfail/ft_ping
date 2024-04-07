@@ -213,6 +213,10 @@ typedef struct  s_ping {
 }               t_ping;
 
 
+extern t_ping   g_ping;
+extern bool     g_stop;
+
+
 int     error_handle(int errnum, char *err_value);
 void    error_gai_handle(char *input, int8_t ec);
 char    *error_icmp_mapping(int type, int code);
@@ -244,6 +248,5 @@ int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data)
 
 void    interrupt(int exit_nb);
 
-extern t_ping    g_ping;
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

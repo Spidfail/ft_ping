@@ -1,9 +1,7 @@
-#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
-#include <math.h>
-#include <netdb.h>
 
-t_ping    g_ping = {0};
+t_ping      g_ping = {0};
+bool        g_stop = false;
 const char *argp_program_bug_address = _OPT_ARGP_BUG_ADDR;
 const char *argp_program_version = _OPT_ARGP_VERSION;
 
@@ -30,14 +28,6 @@ static void     arg_handle(t_arg_d *data, int ac, char *av[]) {
         opt_fork_timeout(data->timeout);
 }
 
-// static int      init_signals() {
-//     return 0;
-// }
-
-// static int      start_timer() {
-//     return gettimeofday(&g_data.session.time_start, NULL);
-// }
-//
 void    sequence_init(t_seq *sequence, const t_packet *to_send) {
     sequence->send = to_send;
     sequence->recv_size = 0;
@@ -57,17 +47,31 @@ void    sequence_deinit(t_seq *sequence) {
 }
 
 void    sequence_clean(t_seq *sequence) {
+    struct addrinfo save = {0};
+    memcpy(&save, sequence->sender.addr_info, sizeof(struct addrinfo));
+    
     sequence->recv_size = 0;
     bzero(&sequence->recv, sizeof(t_packet));
 
     sequence->sender.addr_orig = NULL;
     bzero(sequence->sender.addr_str, INET_ADDRSTRLEN);
     bzero(sequence->sender.addr_info, sizeof(struct addrinfo));
+    sequence->sender.addr_info->ai_addr = save.ai_addr;
     bzero(&sequence->time_enlapsed_ms, sizeof(time_t));
 }
 
 double    calculate_enlapsed_ms(const struct timeval *timeout, time_t max_scd) {
     return (double)(max_scd * 1000000 - timeout->tv_usec) / (double)1000;
+}
+
+void            signal_handler(int sig) {
+    switch (sig) {
+        case SIGINT :
+            g_stop = true;
+            break;
+        default:
+            error_handle(-1, "Error: unexpected signal\n");
+    }
 }
 
 
@@ -76,11 +80,12 @@ int     main(int ac, char *av[]) {
     arg_handle(&(g_ping.args), ac, av);
 
     g_ping.pid = getpid();
-    // if (signal(SIGINT, signal_handler) == SIG_ERR)
-    //     return -1;
     g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.args));
     if (g_ping.session == NULL)
         error_handle(-1, "Error while initializing sessions");
+
+    if (signal(SIGINT, signal_handler) == SIG_ERR)
+        error_handle(-1, "Error while using signal");
 
     for (t_list *link = g_ping.session ; link ; link = link->next ) {
         t_sum           *session = link->content;
@@ -95,18 +100,21 @@ int     main(int ac, char *av[]) {
         if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
             error_handle(-1, "Impossible to send the packet");
 
-        while (true) {
-            // Set fd for select(), need to be done at each loop
+        while (!g_stop) {
             FD_ZERO(&sequence_set);
             FD_SET(session->sockfd, &sequence_set);
 
             rtn = select(4, &sequence_set, NULL, NULL, &timeout);
 
+            // Interrupted select()
             if (rtn == -1) {
-                error_handle(-1, " Error on select()");
+                if (errno != EINTR)
+                    error_handle(-1, "Select stopped unexpectedely");
+                printf("GSTOP = %i\n", g_stop);
+                break;
             }
             // Timeout reached
-            if (rtn == 0) {
+            else if (rtn == 0) {
                 printf("Timeout reached\n");
                 if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
                     error_handle(-1, "Impossible to send the packet");
@@ -114,7 +122,7 @@ int     main(int ac, char *av[]) {
                 timeout.tv_sec = wait_scd;
                 sequence_clean(sequence);
             }
-            // select() interrupted = fd is ready
+            // Fd is ready
             else if (FD_ISSET(session->sockfd, &sequence_set)) {
                 printf("FD ready\n");
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
@@ -124,8 +132,9 @@ int     main(int ac, char *av[]) {
                 packet_print(sequence, sequence->time_enlapsed_ms);
             }
             // TODO: Add a stop condition -> option --count
-
         }
+        fprintf(stderr, "sequence deinit\n");
         sequence_deinit(sequence);
+        // TODO: print session
     }
 }
