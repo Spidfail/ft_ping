@@ -1,10 +1,5 @@
-#include "ft_opt.h"
-#include "libft.h"
 #include <ft_ping.h>
-#include <netdb.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <strings.h>
+#include <math.h>
 
 t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
@@ -53,25 +48,30 @@ void    session_print_sum(t_sum *session) {
     // Calculate the enlapsed time at the end to avoid
     // making a calcul at each turn.
     double  enlapsed = 0;
+    double  loss = 0;
     
     if (!(session->time.time_start.tv_sec == 0 || session->time.time_start.tv_usec == 0
             || session->time.time_end.tv_sec == 0 || session->time.time_end.tv_usec == 0))
         enlapsed = timer_enlapsed_ms(&(session->time.time_start), &(session->time.time_end));
-
     if (session->dest.addr_info == NULL)
         return ;
+
+    loss = ((session->seq_number+1) - session->recv_number);
+    loss = (loss / ((double)session->seq_number+1));
     if (session->dest.addr_info->ai_canonname) {
         __PRINT_SUM(session->dest.addr_info->ai_canonname,
-            session->seq_number,
+            session->seq_number + 1,
             session->recv_number,
             session->err_number,
+            (size_t)loss,
             enlapsed)
     }
     else {
         __PRINT_SUM(session->dest.addr_orig,
-            session->seq_number,
+            session->seq_number + 1,
             session->recv_number,
             session->err_number,
+            (size_t)loss,
             enlapsed)
     }
 

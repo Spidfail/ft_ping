@@ -96,12 +96,12 @@ IPv4 options:\n\
     printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
-#define __PRINT_SUM(name_canon, nb_sent, nb_recv, nb_errors, overall_time) \
+#define __PRINT_SUM(name_canon, nb_sent, nb_recv, loss, nb_errors, overall_time) \
     write(1, "\n", 1); \
     printf("--- %s ping statistics ---\n%i packets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
         printf("+%lu errors, ", nb_errors); \
-    printf("%lu%% packet loss", ((nb_sent - nb_recv) / nb_sent) * 100); \
+    printf("%lu%% packet loss", loss); \
     if (overall_time > 0) \
         printf(", time %fms\n", overall_time); \
     else \
