@@ -119,6 +119,7 @@ int     main(int ac, char *av[]) {
             // Timeout reached
             else if (rtn == 0) {
                 printf("Timeout reached\n");
+                session->seq_number++;
                 if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
                     error_handle(-1, "Impossible to send the packet");
                 timeout.tv_usec = 0;
@@ -130,9 +131,11 @@ int     main(int ac, char *av[]) {
                 printf("FD ready\n");
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
                 sequence->time_enlapsed_ms = (double)(wait_scd * 1000000 - timeout.tv_usec) / (double)1000;
-                if (packet_verify_headers(sequence, ICMP_ECHOREPLY, 0))
+                if (packet_verify_headers(sequence, ICMP_ECHOREPLY, 0) == EXIT_FAILURE)
                     session->err_number++;
-                packet_print(sequence, sequence->time_enlapsed_ms);
+                else
+                    session->recv_number++;
+                packet_print(sequence, sequence->time_enlapsed_ms, session->seq_number);
             }
             // TODO: Add a stop condition -> option --count
         }

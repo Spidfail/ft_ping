@@ -54,9 +54,6 @@ void    session_print_sum(t_sum *session) {
     // making a calcul at each turn.
     double  enlapsed = 0;
     
-    printf("TIME START: %f, %f\n", (double)session->time.time_start.tv_sec, (double)session->time.time_start.tv_usec);
-    printf("TIME END: %f, %f\n", (double)session->time.time_end.tv_sec, (double)session->time.time_end.tv_usec);
-    
     if (!(session->time.time_start.tv_sec == 0 || session->time.time_start.tv_usec == 0
             || session->time.time_end.tv_sec == 0 || session->time.time_end.tv_usec == 0))
         enlapsed = timer_enlapsed_ms(&(session->time.time_start), &(session->time.time_end));
@@ -77,11 +74,13 @@ void    session_print_sum(t_sum *session) {
             session->err_number,
             enlapsed)
     }
+
     if (session->recv_number > 3)
         __PRINT_RTT(session->time.time_min,
             session->time.time_delta,
             session->time.time_max,
             session->recv_number)
+
 }
 
 static void      session_deinit(void *data) {
@@ -97,7 +96,8 @@ t_list      *session_end(t_list **sessions) {
     if (session->time.time_end.tv_sec == 0 && session->time.time_end.tv_usec == 0)
         if (gettimeofday(&(session->time.time_end), NULL) == -1)
             error_handle(0, "Error while gettin' end time");
-    // session_print_sum(session);
+    // TODO: patch FPE
+    session_print_sum(session);
     ft_lstdelone(*sessions, &session_deinit);
     *sessions = next;
     return next;
