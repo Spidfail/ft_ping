@@ -75,7 +75,6 @@ void           start_timer(struct timeval *timer) {
         error_handle(0, "Error while gettin' start time");
 }
 
-
 int     main(int ac, char *av[]) {
     ft_bzero(&g_ping, sizeof(t_ping));
     arg_handle(&(g_ping.args), ac, av);
@@ -100,6 +99,9 @@ int     main(int ac, char *av[]) {
         timeout.tv_sec = wait_scd;
         sequence_init(sequence, &(session->packet));
         start_timer(&(session->time.time_start));
+        
+        if (gettimeofday(&sequence->time_sent, NULL) == -1)
+            error_handle(0, "Fatal: Failed to recover time");
         if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
             error_handle(-1, "Impossible to send the packet");
 
@@ -122,6 +124,8 @@ int     main(int ac, char *av[]) {
                 session->seq_number++;
                 if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
                     error_handle(-1, "Impossible to send the packet");
+                if (gettimeofday(&sequence->time_sent, NULL) == -1)
+                    error_handle(0, "Fatal: Failed to recover time");
                 timeout.tv_usec = 0;
                 timeout.tv_sec = wait_scd;
                 sequence_clean(sequence);
@@ -130,7 +134,10 @@ int     main(int ac, char *av[]) {
             else if (FD_ISSET(session->sockfd, &sequence_set)) {
                 printf("FD ready\n");
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
-                sequence->time_enlapsed_ms = (double)(wait_scd * 1000000 - timeout.tv_usec) / (double)1000;
+                if (gettimeofday(&session->time.time_end, NULL) == -1)
+                    error_handle(0, "Fatal: Failed to recover time");
+                sequence->time_enlapsed_ms = timer_enlapsed_ms(&sequence->time_sent, &session->time.time_end);
+                time_update(session, sequence->time_enlapsed_ms);
                 if (packet_verify_headers(sequence, ICMP_ECHOREPLY, 0) == EXIT_FAILURE)
                     session->err_number++;
                 else

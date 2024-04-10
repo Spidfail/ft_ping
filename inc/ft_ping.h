@@ -184,6 +184,7 @@ typedef struct  s_sequence_sum {
     t_packet            recv;
     t_host              sender;
     ssize_t             recv_size;
+    struct timeval      time_sent;
     double              time_enlapsed_ms;
 }               t_seq;
 
@@ -245,6 +246,9 @@ void        host_get_ip(struct sockaddr *addr_buff);
 
 void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
 uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
+
+void        time_update(t_sum *session, double enlapsed);
+double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end);
 
 int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
 

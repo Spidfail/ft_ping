@@ -24,7 +24,8 @@ SRCS := ft_ping.c \
 	host.c \
 	socket.c \
 	icmp_datagram.c \
-	packet.c
+	packet.c \
+	time.c
 	# verify_header.c \
 	# receive.c \
 	# print.c \

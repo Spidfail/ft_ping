@@ -1,5 +1,4 @@
 #include <ft_ping.h>
-#include <math.h>
 
 t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
@@ -39,11 +38,6 @@ t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args
     return sessions;
 }
 
-double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end) {
-    return (((double)end->tv_sec - (double)start->tv_sec) * 1000)
-        + (((double)end->tv_usec - (double)start->tv_usec) / 1000);
-}
-
 void    session_print_sum(t_sum *session) {
     // Calculate the enlapsed time at the end to avoid
     // making a calcul at each turn.
@@ -75,7 +69,7 @@ void    session_print_sum(t_sum *session) {
             enlapsed)
     }
 
-    if (session->recv_number > 3)
+    if (session->recv_number > 0)
         __PRINT_RTT(session->time.time_min,
             session->time.time_delta,
             session->time.time_max,
@@ -93,9 +87,8 @@ t_list      *session_end(t_list **sessions) {
     t_sum   *session = (*sessions)->content;
     t_list  *next = (*sessions)->next;
     
-    if (session->time.time_end.tv_sec == 0 && session->time.time_end.tv_usec == 0)
-        if (gettimeofday(&(session->time.time_end), NULL) == -1)
-            error_handle(0, "Error while gettin' end time");
+    if (gettimeofday(&(session->time.time_end), NULL) == -1)
+        error_handle(0, "Error while gettin' end time");
     // TODO: patch FPE
     session_print_sum(session);
     ft_lstdelone(*sessions, &session_deinit);
