@@ -1,6 +1,6 @@
 #include <ft_ping.h>
 
-t_sum    *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
+t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
     
     if (new_session == NULL)
@@ -36,6 +36,14 @@ t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args
         ft_lstadd_back(&sessions, link);
     }
     return sessions;
+}
+
+void        session_time_update(t_sum *session, double enlapsed) {
+    session->time.time_delta += enlapsed;
+    if (session->time.time_max < enlapsed)
+        session->time.time_max = enlapsed;
+    if (session->time.time_min > enlapsed)
+        session->time.time_min = enlapsed;
 }
 
 void    session_print_sum(t_sum *session) {
@@ -89,7 +97,6 @@ t_list      *session_end(t_list **sessions) {
     
     if (gettimeofday(&(session->time.time_end), NULL) == -1)
         error_handle(0, "Error while gettin' end time");
-    // TODO: patch FPE
     session_print_sum(session);
     ft_lstdelone(*sessions, &session_deinit);
     *sessions = next;

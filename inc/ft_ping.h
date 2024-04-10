@@ -231,8 +231,9 @@ int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_
 
 t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
 t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
-t_list      *session_end(t_list **sessions);
+void        session_time_update(t_sum *session, double enlapsed);
 void        session_print_sum(t_sum *session);
+t_list      *session_end(t_list **sessions);
 
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);
@@ -247,8 +248,9 @@ void        host_get_ip(struct sockaddr *addr_buff);
 void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
 uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
-void        time_update(t_sum *session, double enlapsed);
 double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end);
+void        timer_set_timeout(struct timeval *timeout, time_t value);
+void        timer_get(struct timeval *timer);
 
 int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
 
