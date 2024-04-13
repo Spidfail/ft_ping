@@ -208,6 +208,10 @@ void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
 void        session_print_sum(t_sum *session);
 t_list      *session_end(t_list **sessions);
 
+void        sequence_init(t_seq *sequence, const t_packet *to_send);
+void        sequence_deinit(t_seq *sequence);
+void        sequence_clean(t_seq *sequence);
+
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);
 void        packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num);
