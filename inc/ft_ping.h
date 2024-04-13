@@ -96,19 +96,15 @@ IPv4 options:\n\
     printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
-#define __PRINT_SUM(name_canon, nb_sent, nb_recv, loss, nb_errors, overall_time) \
+#define __PRINT_SUM(name_canon, nb_sent, nb_recv, loss, nb_errors) \
     write(1, "\n", 1); \
     printf("--- %s ping statistics ---\n%i packets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
         printf("+%lu errors, ", nb_errors); \
-    printf("%lu%% packet loss", loss); \
-    if (overall_time > 0) \
-        printf(", time %fms\n", overall_time); \
-    else \
-        printf("\n"); \
+    printf("%lu%% packet loss\n", loss);
     
-#define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
-    printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
+#define __PRINT_RTT(time_min, time_mean, time_max, recv_number, stddev) \
+    printf("rtt min/avg/max/stddev = %f/%f/%f/%f\n", time_min, time_mean, time_max, stddev);
 
 /////////////////////// ERROR CODES
 
@@ -189,9 +185,9 @@ typedef struct  s_sequence_sum {
 }               t_seq;
 
 struct s_time_metrics {
-    double          time_delta;
     double          time_min;
     double          time_max;
+    t_list          *rtt;
     struct timeval  time_start;
     struct timeval  time_end;
 };
@@ -238,7 +234,6 @@ t_list      *session_end(t_list **sessions);
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);
 void        packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num);
-void        packet_cpy(t_packet *target, const t_packet *source);
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
 

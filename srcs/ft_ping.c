@@ -109,12 +109,10 @@ int     main(int ac, char *av[]) {
             if (rtn == -1) {
                 if (errno != EINTR)
                     error_handle(-1, "Select stopped unexpectedely");
-                printf("GSTOP = %i\n", g_stop);
                 break;
             }
             // Timeout reached
             else if (rtn == 0) {
-                printf("Timeout reached\n");
                 session->seq_number++;
                 if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
                     error_handle(-1, "Impossible to send the packet");
@@ -125,7 +123,6 @@ int     main(int ac, char *av[]) {
             }
             // Fd is ready
             else if (FD_ISSET(session->sockfd, &sequence_set)) {
-                printf("FD ready\n");
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
                 timer_get(&session->time.time_end);
                 sequence->time_enlapsed_ms = timer_enlapsed_ms(&sequence->time_sent, &session->time.time_end);
@@ -138,7 +135,6 @@ int     main(int ac, char *av[]) {
             }
             // TODO: Add a stop condition -> option --count
         }
-        fprintf(stderr, "sequence deinit\n");
         sequence_deinit(sequence);
         link = session_end(&g_ping.session);
     }

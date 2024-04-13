@@ -14,18 +14,3 @@ void        timer_set_timeout(struct timeval *timeout, time_t value) {
     timeout->tv_usec = value * 1000000;
     timeout->tv_sec = 0;
 }
-
-/* 
- * Calculate the mean distance of a list of values using the sum of these values
- * and the length of that list of values (aka the number a values inside this list).
- */
-// double        timer_calculate_mean(int sum, int length) {
-//     return (double)sum / (double)length;
-// }
-
-/* 
- * Calculate the square distance of the value x1 from the mean μ -> (x1 − μ)^2
- */
-// void        timer_calculate_stddev(int x1, int mean) {
-    
-// }
