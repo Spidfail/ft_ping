@@ -57,13 +57,14 @@ void    session_print_begin(const t_sum *session, t_arg_d* const arg_data) {
         char                host_addr[INET_ADDRSTRLEN];
         struct ifaddrs      *interfaces = NULL;
 
-        if (getifaddrs(&interfaces) == -1) {
-            exit(-1);
-        }
+        if (getifaddrs(&interfaces) == -1)
+            error_handle(-1, "Fatal error: impossible to recover interfaces");
         for (struct ifaddrs *ifa = interfaces ; ifa != NULL ; ifa = ifa->ifa_next) {
             if (ft_strcmp(ifa->ifa_name, arg_data->interface) == 0 && ifa->ifa_addr->sa_family == AF_INET) {
-                if (inet_ntop(AF_INET, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, host_addr, INET_ADDRSTRLEN) == NULL)
+                if (inet_ntop(AF_INET, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, host_addr, INET_ADDRSTRLEN) == NULL) {
+                    freeifaddrs(interfaces);
                     error_handle(0, "Fatal error, host ip is not valide");
+                }
             }
         }
         if (session->dest.addr_info->ai_canonname)
