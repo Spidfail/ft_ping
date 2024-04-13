@@ -47,30 +47,7 @@
 
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
-/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
-/// Only the first two are mandatory
 #define _ERROR_USAGE "Destination address required"
-#define _HEADER_USAGE "Usage\n\
-    ping [options] <destination>\n\n\
-Options:\n\
-    <destination>      dns name or ip address\n\
-    -h                 print help and exit\n\
-    -v                 verbose output\n\
-    -f                 flood ping\n\
-    -l <preload>       send <preload> number of packages while waiting replies\n\
-    -I <interface>     either interface name or address\n\
-    -m <mark>          tag the packets going out\n\
-    -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>\n\
-    -n                 no dns name resolution\n\
-    -w <timeout>      reply wait <timeout> in seconds\n\
-    -W <timeout>       time to wait for response\n\
-    -p <pattern>       contents of padding byte\n\
-    -Q <tclass>        use quality of service <tclass> bits\n\
-    -S <size>          use <size> as SO_SNDBUF socket option value\n\
-    -t <ttl>           define time to live\n\
-IPv4 options:\n\
-    -T <timestamp>     define timestamp, can be one of <tsonly|tsandaddr|tsprespec>\n\
-"
 #define _ERROR_INTERFACE_SRCADDR "Warning: source address might be selected on device other than: "
 #define _ERROR_INTERFACE_IFACE "unknown iface: "
 #define _ERROR_INTERFACE_NOSUCHDEVICE "SO_BINDTODEVICE "
@@ -86,25 +63,24 @@ IPv4 options:\n\
     recv_size, ip_addr, error_description); \
 
 #define __PRINT_HEADER_DATABYTE(name_can, name_ip, data_size, packet_size) \
-    printf("PING %s (%s) %lu(%lu) data bytes", \
+    printf("PING %s (%s): %lu(%lu) data bytes", \
     name_can, name_ip, data_size, packet_size); \
 
 #define __PRINT_HEADER_VERBOSE(indent) \
     printf(", id 0x%04x = %u", indent, indent);
 
 #define __PRINT_HEADER_BEG_IF(name_can, name_ip, data_size, packet_size, ip_local, interface) \
-    printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
+    printf("PING %s (%s): from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
 #define __PRINT_SUM(name_canon, nb_sent, nb_recv, loss, nb_errors) \
-    write(1, "\n", 1); \
     printf("--- %s ping statistics ---\n%i packets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
         printf("+%lu errors, ", nb_errors); \
     printf("%lu%% packet loss\n", loss);
     
 #define __PRINT_RTT(time_min, time_mean, time_max, recv_number, stddev) \
-    printf("rtt min/avg/max/stddev = %f/%f/%f/%f\n", time_min, time_mean, time_max, stddev);
+    printf("round-trip min/avg/max/stddev = %f/%f/%f/%f\n", time_min, time_mean, time_max, stddev);
 
 /////////////////////// ERROR CODES
 
@@ -228,6 +204,7 @@ int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_
 t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
 t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
 void        session_time_update(t_sum *session, double enlapsed);
+void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
 void        session_print_sum(t_sum *session);
 t_list      *session_end(t_list **sessions);
 

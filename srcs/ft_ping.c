@@ -80,11 +80,11 @@ int     main(int ac, char *av[]) {
     g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.args));
     if (g_ping.session == NULL)
         error_handle(-1, "Error while initializing sessions");
+    t_list *link = g_ping.session;
 
     if (signal(SIGINT, signal_handler) == SIG_ERR)
         error_handle(-1, "Error while using signal");
 
-    t_list *link = g_ping.session;
     while (link) {
         t_sum           *session = link->content;
         t_seq           *sequence = &(session->sequence);
@@ -93,6 +93,7 @@ int     main(int ac, char *av[]) {
         time_t          wait_scd = 1;
         int             rtn = 0;
         
+        session_print_begin(session, &g_ping.args);
         timer_set_timeout(&timeout, wait_scd);
         sequence_init(sequence, &(session->packet));
         timer_get(&(session->time.time_start));
