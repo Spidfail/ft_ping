@@ -86,9 +86,9 @@ void     packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_n
     }
     error_desc =  error_icmp_mapping(sequence->recv.icmp_hdr.type, sequence->recv.icmp_hdr.code);
     if (error_desc != NULL) {
-        __PRINT_PACKET_ERROR(sequence->recv_size + _ICMP_HDR_SIZE, addr_str, error_desc);
+        __PRINT_PACKET_ERROR(sequence->recv_size, addr_str, error_desc);
     }
     else
-        __PRINT_PACKET(sequence->recv_size + _ICMP_HDR_SIZE, addr_str, seq_num, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);
+        __PRINT_PACKET(sequence->recv_size, addr_str, seq_num, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);
 
 }
