@@ -10,7 +10,10 @@ void        timer_get(struct timeval *timer) {
         error_handle(0, "Error while gettin' start time");
 }
 
-void        timer_set_timeout(struct timeval *timeout, time_t value) {
-    timeout->tv_usec = value * 1000000;
+void        timer_set_timeout(struct timeval *timeout, time_t value, bool flood) {
+    if (!flood)
+        timeout->tv_usec = value * 1000000;
+    else
+        timeout->tv_usec = value * 10000;
     timeout->tv_sec = 0;
 }

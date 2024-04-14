@@ -224,7 +224,7 @@ void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
 uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
 double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end);
-void        timer_set_timeout(struct timeval *timeout, time_t value);
+void        timer_set_timeout(struct timeval *timeout, time_t value, bool flood);
 void        timer_get(struct timeval *timer);
 
 int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
