@@ -1,3 +1,4 @@
+#include "libft.h"
 #include <ft_ping.h>
 #include <math.h>
 
@@ -9,12 +10,19 @@ t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_g
     new_session->pid = pid;
     new_session->sockfd = sockfd;
     new_session->seq_number = 0;
-    host_lookup(&(new_session->dest), raw_addr, true);
+    new_session->dest.addr_orig = raw_addr;
     new_session->time.time_min = DBL_MAX;
     new_session->time.time_max = DBL_MIN;
     // Init icmp datagram only. The IP header is generated automatically when using `sendto()`, based on socket options.
     (*datagram_generate)(&new_session->packet, new_session->seq_number);
     return new_session;
+}
+
+void    session_deinit_hosts(t_list **hosts) {
+    if (*hosts == NULL)
+        return ;
+    session_deinit_hosts(&((*hosts)->next));
+    ft_lstdelone_lst(*hosts, free);
 }
 
 t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data) {
