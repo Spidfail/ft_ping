@@ -53,6 +53,7 @@ int     main(int ac, char *av[]) {
         time_t          wait_scd = 1;
         int             rtn = 0;
         
+
         // Initialise the sockfd here rather than in session_init_all to avoid file descriptor shortage issue
         session->sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, &g_ping.args);
 
@@ -60,6 +61,8 @@ int     main(int ac, char *av[]) {
         // Otherwise, different behaviour when getaddrinfo can't find the host.
         host_lookup(&(session->dest), session->dest.addr_orig, !g_ping.args.numeric);
 
+        if (g_ping.args.interval > 0)
+            wait_scd = g_ping.args.interval;
         if (g_ping.args.flood || g_ping.args.preload)
             timer_set_timeout(&timeout, wait_scd, true);
         else
