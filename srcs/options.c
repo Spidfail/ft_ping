@@ -1,5 +1,3 @@
-#include <ft_opt.h>
-#include "libft.h"
 #include <ft_ping.h>
 
 void     opt_fork_timeout(int scd) {
@@ -186,6 +184,12 @@ error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
             if (opt_arg_add(&(option_data->args), arg) == NULL)
                 return -1;
             break;
+        
+        case ARGP_KEY_END:
+            if (ft_lstsize(option_data->args) < 1) {
+                fprintf(stderr, "%s %s\n", _ERROR_HEADER, "missing host operand");
+                argp_usage(state);
+            }
         default:
             return ARGP_ERR_UNKNOWN;
     }

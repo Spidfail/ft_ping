@@ -25,16 +25,15 @@ void    session_deinit_hosts(t_list **hosts) {
     ft_lstdelone_lst(*hosts, free);
 }
 
-t_list  *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data) {
+t_list  *session_init_all(uint16_t pid, const t_list *hosts) {
     t_list *sessions = NULL;
 
     for (const t_list *tmp = hosts ; tmp ; tmp = tmp->next) {
         t_sum   *new = NULL;
         t_list  *link = NULL;
-        int     sockfd = 0;
 
-        sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, args_data);
-        new = session_new(pid, sockfd, tmp->content, ping_datagram_generate);
+        // Initialise the sockfd in the main loop to avoid file descriptor shortage issue
+        new = session_new(pid, -1, tmp->content, ping_datagram_generate);
         if (new == NULL)
             return NULL;
         link = ft_lstnew(new);
@@ -181,6 +180,8 @@ t_list      *session_end(t_list **sessions) {
     
     if (gettimeofday(&(session->time.time_end), NULL) == -1)
         error_handle(0, "Error while gettin' end time");
+    if (close(session->sockfd) == -1)
+        error_handle(-1, "Cannot close fd");
     session_print_sum(session);
 
     ft_lstdelone(*sessions, &session_deinit);

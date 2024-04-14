@@ -199,10 +199,8 @@ char    *error_icmp_mapping(int type, int code);
 int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
 int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
 
-// void    signal_handler(int sig);
-
 t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
-t_list      *session_init_all(uint16_t pid, const t_list *hosts, const t_arg_d *args_data);
+t_list      *session_init_all(uint16_t pid, const t_list *hosts);
 void        session_time_update(t_sum *session, double enlapsed);
 void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
 void        session_print_sum(t_sum *session);

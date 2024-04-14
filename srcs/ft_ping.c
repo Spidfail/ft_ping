@@ -37,7 +37,7 @@ int     main(int ac, char *av[]) {
     arg_handle(&(g_ping.args), ac, av);
 
     g_ping.pid = getpid();
-    g_ping.session = session_init_all(g_ping.pid, g_ping.args.args, &(g_ping.args));
+    g_ping.session = session_init_all(g_ping.pid, g_ping.args.args);
     session_deinit_hosts(&(g_ping.args.args));
     if (g_ping.session == NULL)
         error_handle(-1, "Error while initializing sessions");
@@ -53,14 +53,18 @@ int     main(int ac, char *av[]) {
         time_t          wait_scd = 1;
         int             rtn = 0;
         
+        // Initialise the sockfd here rather than in session_init_all to avoid file descriptor shortage issue
+        session->sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, &g_ping.args);
+
         // Necessary: inetutils-v2.0 is doing the lookup at the begining of each session.
         // Otherwise, different behaviour when getaddrinfo can't find the host.
         host_lookup(&(session->dest), session->dest.addr_orig, !g_ping.args.numeric);
 
-        session_print_begin(session, &g_ping.args);
         timer_set_timeout(&timeout, wait_scd);
         sequence_init(sequence, &(session->packet));
         timer_get(&(session->time.time_start));
+
+        session_print_begin(session, &g_ping.args);
         if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
             error_handle(-1, "Impossible to send the packet");
 
