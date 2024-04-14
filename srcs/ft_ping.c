@@ -60,7 +60,10 @@ int     main(int ac, char *av[]) {
         // Otherwise, different behaviour when getaddrinfo can't find the host.
         host_lookup(&(session->dest), session->dest.addr_orig, !g_ping.args.numeric);
 
-        timer_set_timeout(&timeout, wait_scd, g_ping.args.flood);
+        if (g_ping.args.flood || g_ping.args.preload)
+            timer_set_timeout(&timeout, wait_scd, true);
+        else
+            timer_set_timeout(&timeout, wait_scd, false);
         sequence_init(sequence, &(session->packet));
         timer_get(&(session->time.time_start));
 
@@ -86,7 +89,10 @@ int     main(int ac, char *av[]) {
                 if (packet_send(session->sockfd, &(session->dest), sequence->send) == -1)
                     error_handle(-1, "Impossible to send the packet");
                 timer_get(&sequence->time_sent);
-                timer_set_timeout(&timeout, wait_scd, g_ping.args.flood);
+                if (g_ping.args.flood || session->seq_number + 1 <= g_ping.args.preload)
+                    timer_set_timeout(&timeout, wait_scd, true);
+                else
+                    timer_set_timeout(&timeout, wait_scd, false);
                 bzero(&(session->time.time_end), sizeof(struct timeval));
                 sequence_clean(sequence);
             }
