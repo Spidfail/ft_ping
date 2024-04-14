@@ -15,10 +15,7 @@ int error_handle(int errnum, char *err_value) {
             break;
         case EX_USAGE :
             if (err_value)
-                fprintf(stderr, "%s Wrong arguments\n%s\n", _ERROR_HEADER, err_value);
-            else
-                fprintf(stderr, "%s usage error: %s\n", _ERROR_HEADER, _ERROR_USAGE);
-            break;
+                fprintf(stderr, "%s %s\n", _ERROR_HEADER, err_value);
         case _EX_NOERRNO:
             fprintf(stderr, "%s\n", err_value);
             break;

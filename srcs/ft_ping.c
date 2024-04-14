@@ -5,11 +5,6 @@ bool        g_stop = false;
 const char *argp_program_bug_address = _OPT_ARGP_BUG_ADDR;
 const char *argp_program_version = _OPT_ARGP_VERSION;
 
-static void    check_input(int ac) {
-    if (ac < 2)
-        error_handle(EX_USAGE, NULL);
-}
-
 static void     parse_input(char *av[], int ac, t_arg_d *arg_data) {
     struct argp argp;
     
@@ -22,7 +17,6 @@ static void     parse_input(char *av[], int ac, t_arg_d *arg_data) {
 }
 
 static void     arg_handle(t_arg_d *data, int ac, char *av[]) {
-    check_input(ac);
     parse_input(av, ac, data);
     if (data->timeout > 0)
         opt_fork_timeout(data->timeout);
