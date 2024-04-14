@@ -101,8 +101,11 @@ int     main(int ac, char *av[]) {
                 else
                     session->recv_number++;
                 packet_print(sequence, sequence->time_enlapsed_ms, session->seq_number);
+
+                // Option --count
+                if (session->seq_number + 1 == g_ping.args.count)
+                    break;
             }
-            // TODO: Add a stop condition -> option --count
         }
         sequence_deinit(sequence);
         link = session_end(&g_ping.session);
