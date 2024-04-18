@@ -2,7 +2,7 @@
 
 void    sequence_init(t_seq *sequence, const t_packet *to_send) {
     timer_get(&(sequence->time_sent));
-    sequence->send = to_send;
+    packet_copy(&(sequence->send), to_send);
     sequence->recv_size = 0;
     sequence->sender.addr_info = ft_calloc(1, sizeof(struct addrinfo));
     if (sequence->sender.addr_info == NULL)

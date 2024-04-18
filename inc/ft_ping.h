@@ -152,7 +152,7 @@ typedef struct  s_host {
 }               t_host;
 
 typedef struct  s_sequence_sum {
-    const t_packet      *send;
+    t_packet            send;
     t_packet            recv;
     t_host              sender;
     ssize_t             recv_size;
@@ -199,7 +199,7 @@ char    *error_icmp_mapping(int type, int code);
 int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
 int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
 
-t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t));
+t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t, uint16_t));
 t_list      *session_init_all(uint16_t pid, const t_list *hosts);
 void        session_time_update(t_sum *session, double enlapsed);
 void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
@@ -216,11 +216,13 @@ int         packet_receive(int sockfd, t_seq *sequence);
 void        packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num);
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
+void        packet_copy(t_packet *target, const t_packet *source);
+void        packet_modify_sequence_number(t_packet *packet, uint16_t seq_num);
 
 void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);
 
-void        ping_datagram_generate(t_packet *packet, uint16_t seq_number);
+void        ping_datagram_generate(t_packet *packet, uint16_t seq_number, uint16_t id);
 uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
 double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end);

@@ -1,9 +1,23 @@
+#include "libft.h"
 #include <ft_ping.h>
+#include <stddef.h>
 
-void    packet_cpy(t_packet *target, const t_packet *source) {
+void    packet_copy(t_packet *target, const t_packet *source) {
     ft_memcpy(target->data, source->data, _PING_DATA_SIZE);
     ft_memcpy(&(target->icmp_hdr), &(source->icmp_hdr), sizeof(struct icmphdr));
     ft_memcpy(&(target->ip_hdr), &(source->ip_hdr), sizeof(struct iphdr));
+}
+
+void    packet_modify_sequence_number(t_packet *packet, uint16_t seq_num) {
+    packet->icmp_hdr.un.echo.sequence = seq_num;
+    packet->icmp_hdr.checksum = 0;
+    packet->icmp_hdr.checksum = ping_datagram_checksum(&(packet->icmp_hdr), packet->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
+}
+
+void    packet_modify_data(t_packet *packet, const char *data, size_t size) {
+    ft_memcpy(packet->data, data, size);
+    packet->icmp_hdr.checksum = 0;
+    packet->icmp_hdr.checksum = ping_datagram_checksum(&(packet->icmp_hdr), packet->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
 }
 
 int     packet_receive(int sockfd, t_seq *sequence) {
@@ -25,7 +39,7 @@ int     packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code)
 
     hdr_tmp.checksum = 0;
     ip_tmp.ip_sum = 0;
-    hdr_tmp.checksum = ping_datagram_checksum(&hdr_tmp, sequence->send->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
+    hdr_tmp.checksum = ping_datagram_checksum(&hdr_tmp, sequence->send.data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
     ip_checksum = packet_checksum_calculate((char*)&ip_tmp, _IP_HDR_SIZE);
     if (memcmp(&hdr_tmp, &sequence->recv.icmp_hdr, _ICMP_HDR_SIZE) != 0)
         return EXIT_FAILURE;
@@ -72,6 +86,12 @@ int                 packet_send(int sockfd, const t_host *dest, const t_packet *
     return rtn;
 }
 
+// static void     packet_print_error_ip(const struct ip *ip) {
+// }
+
+// static void     packet_print_error_icmp(const struct icmphdr *icmp) {
+// }
+
 void     packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num) {
     char    addr_str[INET_ADDRSTRLEN];
     char    *error_desc = NULL;
@@ -87,6 +107,8 @@ void     packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_n
     error_desc =  error_icmp_mapping(sequence->recv.icmp_hdr.type, sequence->recv.icmp_hdr.code);
     if (error_desc != NULL) {
         __PRINT_PACKET_ERROR(sequence->recv_size, addr_str, error_desc);
+        // packet_print_error_ip(&(sequence->recv.ip_hdr));
+        // packet_print_error_icmp(&(sequence->recv.icmp_hdr));
     }
     else
         __PRINT_PACKET(sequence->recv_size, addr_str, seq_num, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);

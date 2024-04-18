@@ -2,7 +2,7 @@
 #include <ft_ping.h>
 #include <math.h>
 
-t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t)) {
+t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t, uint16_t)) {
     t_sum   *new_session = ft_calloc(1, sizeof(t_sum));
     
     if (new_session == NULL)
@@ -14,7 +14,7 @@ t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_g
     new_session->time.time_min = DBL_MAX;
     new_session->time.time_max = DBL_MIN;
     // Init icmp datagram only. The IP header is generated automatically when using `sendto()`, based on socket options.
-    (*datagram_generate)(&new_session->packet, new_session->seq_number);
+    (*datagram_generate)(&new_session->packet, new_session->seq_number, new_session->pid);
     return new_session;
 }
 

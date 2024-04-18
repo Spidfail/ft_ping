@@ -27,16 +27,16 @@ static void        ping_data_generate(char data[]) {
 }
 
 /// Fill the header for an ECHO_REQUEST with sequence number equal to 1.
-static void        ping_fill_header_icmp(struct icmphdr *header, char *data, size_t data_size, uint16_t seq_number) {
+static void        ping_fill_header_icmp(struct icmphdr *header, char *data, size_t data_size, uint16_t seq_number, uint16_t id) {
     header->type = ICMP_ECHO;
     header->code = 0;
     header->checksum = 0; // Making sure the checksum is not set
-    header->un.echo.id = getuid();
+    header->un.echo.id = id;
     header->un.echo.sequence = seq_number;
     header->checksum = ping_datagram_checksum(header, data, data_size);
 }
 
-void                ping_datagram_generate(t_packet *packet, uint16_t seq_number) {
+void                ping_datagram_generate(t_packet *packet, uint16_t seq_number, uint16_t id) {
     ping_data_generate(packet->data);
-    ping_fill_header_icmp(&(packet->icmp_hdr), packet->data, _PING_DATA_SIZE, seq_number);
+    ping_fill_header_icmp(&(packet->icmp_hdr), packet->data, _PING_DATA_SIZE, seq_number, id);
 }
