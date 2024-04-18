@@ -1,3 +1,4 @@
+#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
 
 t_ping      g_ping = {0};
@@ -71,6 +72,7 @@ int     main(int ac, char *av[]) {
         timer_get(&(session->time.time_start));
 
         session_print_begin(session, &g_ping.args);
+        packet_update_timestamp(&sequence->send);
         if (packet_send(session->sockfd, &(session->dest), &(sequence->send)) == -1)
             error_handle(-1, "Impossible to send the packet");
 
@@ -90,6 +92,7 @@ int     main(int ac, char *av[]) {
             else if (rtn == 0) {
                 session->seq_number++;
                 packet_modify_sequence_number(&(sequence->send), session->seq_number);
+                packet_update_timestamp(&sequence->send);
                 if (packet_send(session->sockfd, &(session->dest), &(sequence->send)) == -1)
                     error_handle(-1, "Impossible to send the packet");
                 timer_get(&sequence->time_sent);

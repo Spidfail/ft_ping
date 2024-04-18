@@ -218,6 +218,8 @@ uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
 void        packet_copy(t_packet *target, const t_packet *source);
 void        packet_modify_sequence_number(t_packet *packet, uint16_t seq_num);
+void        packet_modify_data(t_packet *packet, const char *data, size_t size);
+void        packet_update_timestamp(t_packet *packet);
 
 void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);

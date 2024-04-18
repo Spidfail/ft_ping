@@ -1,6 +1,8 @@
 #include "libft.h"
+#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
 #include <stddef.h>
+#include <sys/time.h>
 
 void    packet_copy(t_packet *target, const t_packet *source) {
     ft_memcpy(target->data, source->data, _PING_DATA_SIZE);
@@ -18,6 +20,13 @@ void    packet_modify_data(t_packet *packet, const char *data, size_t size) {
     ft_memcpy(packet->data, data, size);
     packet->icmp_hdr.checksum = 0;
     packet->icmp_hdr.checksum = ping_datagram_checksum(&(packet->icmp_hdr), packet->data, _ICMP_HDR_SIZE + _PING_DATA_SIZE);
+}
+
+void    packet_update_timestamp(t_packet *packet) {
+    struct timeval now = {0};
+    
+    timer_get(&now);
+    packet_modify_data(packet, (char*)&now, sizeof(struct timeval));
 }
 
 int     packet_receive(int sockfd, t_seq *sequence) {
