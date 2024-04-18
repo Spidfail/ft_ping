@@ -1,8 +1,14 @@
+#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
 
-double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end) {
-    return (((double)end->tv_sec - (double)start->tv_sec) * 1000)
-        + (((double)end->tv_usec - (double)start->tv_usec) / 1000);
+double      timer_enlapsed_ms(const t_packet *packet) {
+    struct timeval start = {0};
+    struct timeval end = {0};
+    
+    ft_memcpy(&start, packet->data, sizeof(struct timeval));
+    timer_get(&end);
+    return (((double)end.tv_sec - (double)start.tv_sec) * 1000)
+        + (((double)end.tv_usec - (double)start.tv_usec) / 1000);
 }
 
 void        timer_get(struct timeval *timer) {

@@ -156,7 +156,6 @@ typedef struct  s_sequence_sum {
     t_packet            recv;
     t_host              sender;
     ssize_t             recv_size;
-    struct timeval      time_sent;
     double              time_enlapsed_ms;
 }               t_seq;
 
@@ -213,7 +212,7 @@ void        sequence_clean(t_seq *sequence);
 
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);
-void        packet_print(const t_seq *sequence, float time_enlapsed);
+void        packet_print(const t_seq *sequence);
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
 void        packet_copy(t_packet *target, const t_packet *source);
@@ -227,7 +226,7 @@ void        host_get_ip(struct sockaddr *addr_buff);
 void        ping_datagram_generate(t_packet *packet, uint16_t seq_number, uint16_t id);
 uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
-double      timer_enlapsed_ms(const struct timeval *start, const struct timeval *end);
+double      timer_enlapsed_ms(const t_packet *packet);
 void        timer_set_timeout(struct timeval *timeout, time_t value, bool flood);
 void        timer_get(struct timeval *timer);
 

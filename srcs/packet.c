@@ -1,8 +1,4 @@
-#include "libft.h"
-#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
-#include <stddef.h>
-#include <sys/time.h>
 
 void    packet_copy(t_packet *target, const t_packet *source) {
     ft_memcpy(target->data, source->data, _PING_DATA_SIZE);
@@ -101,7 +97,7 @@ int                 packet_send(int sockfd, const t_host *dest, const t_packet *
 // static void     packet_print_error_icmp(const struct icmphdr *icmp) {
 // }
 
-void     packet_print(const t_seq *sequence, float time_enlapsed) {
+void     packet_print(const t_seq *sequence) {
     char    addr_str[INET_ADDRSTRLEN];
     char    *error_desc = NULL;
     
@@ -120,6 +116,6 @@ void     packet_print(const t_seq *sequence, float time_enlapsed) {
         // packet_print_error_icmp(&(sequence->recv.icmp_hdr));
     }
     else
-        __PRINT_PACKET(sequence->recv_size, addr_str, sequence->recv.icmp_hdr.un.echo.sequence, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);
+        __PRINT_PACKET(sequence->recv_size, addr_str, sequence->recv.icmp_hdr.un.echo.sequence, sequence->recv.ip_hdr.ip_ttl, sequence->time_enlapsed_ms);
 
 }

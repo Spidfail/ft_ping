@@ -1,7 +1,6 @@
 #include <ft_ping.h>
 
 void    sequence_init(t_seq *sequence, const t_packet *to_send) {
-    timer_get(&(sequence->time_sent));
     packet_copy(&(sequence->send), to_send);
     sequence->recv_size = 0;
     sequence->sender.addr_info = ft_calloc(1, sizeof(struct addrinfo));

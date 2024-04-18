@@ -95,7 +95,6 @@ int     main(int ac, char *av[]) {
                 packet_update_timestamp(&sequence->send);
                 if (packet_send(session->sockfd, &(session->dest), &(sequence->send)) == -1)
                     error_handle(-1, "Impossible to send the packet");
-                timer_get(&sequence->time_sent);
                 if (g_ping.args.flood || session->seq_number + 1 <= g_ping.args.preload)
                     timer_set_timeout(&timeout, wait_scd, true);
                 else
@@ -106,15 +105,14 @@ int     main(int ac, char *av[]) {
             // Fd is ready
             else if (FD_ISSET(session->sockfd, &sequence_set)) {
                 sequence->recv_size = packet_receive(session->sockfd, sequence);
-                timer_get(&session->time.time_end);
-                sequence->time_enlapsed_ms = timer_enlapsed_ms(&sequence->time_sent, &session->time.time_end);
+                sequence->time_enlapsed_ms = timer_enlapsed_ms(&(sequence->recv));
                 session_time_update(session, sequence->time_enlapsed_ms);
                 if (packet_verify_headers(sequence, ICMP_ECHOREPLY, 0) == EXIT_FAILURE)
                     session->err_number++;
                 else
                     session->recv_number++;
                 if (!g_ping.args.flood)
-                    packet_print(sequence, sequence->time_enlapsed_ms);
+                    packet_print(sequence);
                 // Option --count
                 if (session->seq_number + 1 == g_ping.args.count)
                     break;
