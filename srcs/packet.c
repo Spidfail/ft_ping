@@ -92,7 +92,7 @@ int                 packet_send(int sockfd, const t_host *dest, const t_packet *
 // static void     packet_print_error_icmp(const struct icmphdr *icmp) {
 // }
 
-void     packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num) {
+void     packet_print(const t_seq *sequence, float time_enlapsed) {
     char    addr_str[INET_ADDRSTRLEN];
     char    *error_desc = NULL;
     
@@ -111,6 +111,6 @@ void     packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_n
         // packet_print_error_icmp(&(sequence->recv.icmp_hdr));
     }
     else
-        __PRINT_PACKET(sequence->recv_size, addr_str, seq_num, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);
+        __PRINT_PACKET(sequence->recv_size, addr_str, sequence->recv.icmp_hdr.un.echo.sequence, sequence->recv.ip_hdr.ip_ttl, time_enlapsed);
 
 }

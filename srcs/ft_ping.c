@@ -111,7 +111,7 @@ int     main(int ac, char *av[]) {
                 else
                     session->recv_number++;
                 if (!g_ping.args.flood)
-                    packet_print(sequence, sequence->time_enlapsed_ms, session->seq_number);
+                    packet_print(sequence, sequence->time_enlapsed_ms);
                 // Option --count
                 if (session->seq_number + 1 == g_ping.args.count)
                     break;

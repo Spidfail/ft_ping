@@ -213,7 +213,7 @@ void        sequence_clean(t_seq *sequence);
 
 int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
 int         packet_receive(int sockfd, t_seq *sequence);
-void        packet_print(const t_seq *sequence, float time_enlapsed, uint16_t seq_num);
+void        packet_print(const t_seq *sequence, float time_enlapsed);
 uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
 int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
 void        packet_copy(t_packet *target, const t_packet *source);
