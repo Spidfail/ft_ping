@@ -91,13 +91,70 @@ int                 packet_send(int sockfd, const t_host *dest, const t_packet *
     return rtn;
 }
 
-// static void     packet_print_error_ip(const struct ip *ip) {
-// }
+static unsigned short     packet_print_ip_flag(unsigned short ip_off) {
+     return (ip_off & 0xF000) >> 12;
+}
 
-// static void     packet_print_error_icmp(const struct icmphdr *icmp) {
-// }
+static void     packet_print_error_ip(const struct ip *ip) {
+    char    *data = (char*)ip;
+    char    ip_src[16] = {0};
+    char    ip_dst[16] = {0};
+    size_t  len = sizeof(struct ip);
+    int     rtn = 0;
 
-void     packet_print(const t_seq *sequence) {
+    for (size_t i = 0 ; i < len ; i++) {
+        rtn += printf("%02hhx", data[i]);
+        if (rtn == 4) {
+            printf(" ");
+            rtn = 0;
+        }
+    }
+    inet_ntop(AF_INET, &ip->ip_src, ip_src, 16);
+    inet_ntop(AF_INET, &ip->ip_dst, ip_dst, 16);
+    /* Calculate ip flags:
+     * Take the ip->ip_id + 1 or ip + 7 (7th byte of the start)
+     * Since the flags are set over the 3 bits over 8,
+     * we need to shift them to the begining to calculate their value:
+     * value >> 5;
+     * There is the value, between 0 and 3, we can cast it to int
+    */
+
+    printf("\n");
+    printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src\tDst\tData\n");
+    printf("%2x %2x  %02hhx %04x %02hx   %01x %04x  %02hx  %02hx %04hx %-16s %-16s ",
+        ip->ip_v,
+        ip->ip_hl,
+        ip->ip_tos,
+        (ip->ip_len > 0x2000) ? ntohs (ip->ip_len) : ip->ip_len,
+        ntohs(ip->ip_id),
+        packet_print_ip_flag(ip->ip_off),
+        (ip->ip_off & IP_OFFMASK),
+        ip->ip_ttl,
+        ip->ip_p,
+        ntohs(ip->ip_sum),
+        ip_src,
+        ip_dst
+        );
+
+    size_t          hlen = ip->ip_hl << 2;
+    unsigned char   *data_ptr = (unsigned char*)ip + sizeof(*ip);
+
+    while (hlen-- > sizeof (*ip))
+        printf("%02x", (*data_ptr)++);
+    printf("\n");
+}
+
+// ICMP: type 8, code 0, size 64, id 0x06ef, seq 0x0000
+static void     packet_print_error_icmp(const struct icmphdr *icmp, unsigned short ip_len) {
+    printf("ICMP:");
+    printf(" type %i,", icmp->type);
+    printf(" code %i,", icmp->code);
+    printf(" size %hu,", ip_len);
+    printf(" id 0x%04hx,", icmp->un.echo.id);
+    printf(" seq 0x%04x\n", icmp->un.echo.sequence);
+}
+
+void     packet_print(const t_seq *sequence, bool verbose) {
     char    addr_str[INET_ADDRSTRLEN];
     char    *error_desc = NULL;
     
@@ -111,11 +168,17 @@ void     packet_print(const t_seq *sequence) {
     }
     error_desc =  error_icmp_mapping(sequence->recv.icmp_hdr.type, sequence->recv.icmp_hdr.code);
     if (error_desc != NULL) {
+
         __PRINT_PACKET_ERROR(sequence->recv_size, addr_str, error_desc);
-        // packet_print_error_ip(&(sequence->recv.ip_hdr));
-        // packet_print_error_icmp(&(sequence->recv.icmp_hdr));
+        if (verbose) {
+            const struct ip         *ip = (struct ip*)sequence->recv.data;
+            int                     hdr_len = ip->ip_hl << 2;
+            const struct icmphdr    *icmp = (struct icmphdr*)((unsigned char*)ip + hdr_len);
+
+            packet_print_error_ip(ip);
+            packet_print_error_icmp(icmp, ntohs(ip->ip_len) - hdr_len);
+        }
     }
     else
         __PRINT_PACKET(sequence->recv_size, addr_str, sequence->recv.icmp_hdr.un.echo.sequence, sequence->recv.ip_hdr.ip_ttl, sequence->time_enlapsed_ms);
-
 }

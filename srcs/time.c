@@ -1,4 +1,3 @@
-#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
 
 double      timer_enlapsed_ms(const t_packet *packet) {

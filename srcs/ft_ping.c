@@ -54,7 +54,6 @@ int     main(int ac, char *av[]) {
         time_t          wait_scd = 1;
         int             rtn = 0;
         
-
         // Initialise the sockfd here rather than in session_init_all to avoid file descriptor shortage issue
         session->sockfd = socket_init(_INET_FAM, SOCK_RAW, IPPROTO_ICMP, &g_ping.args);
 
@@ -112,7 +111,7 @@ int     main(int ac, char *av[]) {
                 else
                     session->recv_number++;
                 if (!g_ping.args.flood)
-                    packet_print(sequence);
+                    packet_print(sequence, g_ping.args.verbose);
                 // Option --count
                 if (session->seq_number + 1 == g_ping.args.count)
                     break;
