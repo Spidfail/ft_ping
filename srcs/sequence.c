@@ -13,9 +13,13 @@ void    sequence_init(t_seq *sequence, const t_packet *to_send) {
 }
 
 void    sequence_deinit(t_seq *sequence) {
-   free(sequence->sender.addr_info->ai_addr);
-   free(sequence->sender.addr_info);
-   bzero(sequence, sizeof(t_seq));
+    if (sequence == NULL)
+        return ;
+    if (sequence->sender.addr_info) {
+        free(sequence->sender.addr_info->ai_addr);
+        free(sequence->sender.addr_info);
+    }
+    bzero(sequence, sizeof(t_seq));
 }
 
 void    sequence_clean(t_seq *sequence) {

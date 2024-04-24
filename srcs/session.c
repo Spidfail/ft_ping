@@ -18,13 +18,6 @@ t_sum   *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_g
     return new_session;
 }
 
-void    session_deinit_hosts(t_list **hosts) {
-    if (*hosts == NULL)
-        return ;
-    session_deinit_hosts(&((*hosts)->next));
-    ft_lstdelone_lst(*hosts, free);
-}
-
 t_list  *session_init_all(uint16_t pid, const t_list *hosts) {
     t_list *sessions = NULL;
 
@@ -167,6 +160,14 @@ void    session_print_sum(t_sum *session) {
 
 }
 
+void    session_deinit_hosts(t_list **hosts) {
+    if (*hosts == NULL)
+        return ;
+    session_deinit_hosts(&((*hosts)->next));
+    ft_lstdelone_lst(*hosts, free);
+    *hosts = NULL;
+}
+
 static void      session_deinit(void *data) {
     t_sum   *session = data;
     ft_lstclear(&(session->time.rtt), free);
@@ -174,17 +175,24 @@ static void      session_deinit(void *data) {
     free(session);
 }
 
-t_list      *session_end(t_list **sessions) {
+t_list          *session_clean(t_list **sessions) {
     t_sum   *session = (*sessions)->content;
     t_list  *next = (*sessions)->next;
-    
-    if (gettimeofday(&(session->time.time_end), NULL) == -1)
-        error_handle(0, "Error while gettin' end time");
-    if (close(session->sockfd) == -1)
-        error_handle(-1, "Cannot close fd");
-    session_print_sum(session);
 
+    if (session->sockfd > 2) {
+        close(session->sockfd);
+        session->sockfd = -1;
+    }
     ft_lstdelone(*sessions, &session_deinit);
     *sessions = next;
     return next;
+}
+
+t_list      *session_end(t_list **sessions) {
+    t_sum   *session = (*sessions)->content;
+    
+    if (gettimeofday(&(session->time.time_end), NULL) == -1)
+        error_handle(0, "Error while gettin' end time");
+    session_print_sum(session);
+    return session_clean(sessions);
 }

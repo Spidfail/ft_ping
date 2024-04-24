@@ -22,6 +22,15 @@ int error_handle(int errnum, char *err_value) {
         default :
             fprintf(stderr, "%s %s: %s\n",_ERROR_HEADER, err_value, strerror(errno));
     }
+    if (g_ping.session) {
+        t_seq  *sequence = &((t_sum *)g_ping.session->content)->sequence;
+        
+        sequence_deinit(sequence);
+        while (g_ping.session)
+            g_ping.session = session_clean(&g_ping.session);
+    }
+    if (g_ping.args.args)
+        session_deinit_hosts(&(g_ping.args.args));
     exit(errnum);
 }
 
@@ -30,5 +39,6 @@ void    error_gai_handle(char *input, int8_t ec) {
     fprintf(stderr, "ping: %s: %s\n", input, gai_strerror(ec));
     // MACOS version
     // fprintf(stderr, "ping: cannot resolve %s: %s\n", input, gai_strerror(ec));
+    error_handle(ec, input);
     exit(ec);
 }

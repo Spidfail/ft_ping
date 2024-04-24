@@ -9,8 +9,8 @@ OBJ_DIR := objs
 SRC_DIR := srcs
 INC_DIR := inc
 
-CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) # -fsanitize=address #-g3   
-LDFLAGS := -L$(LIBFT_DIR) 
+CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) -gdwarf-4 #-fsanitize=address      
+LDFLAGS := -L$(LIBFT_DIR) #-fsanitize=address
 LDLIBS := -lft -lm
 
 

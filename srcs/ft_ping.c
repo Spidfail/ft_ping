@@ -1,4 +1,3 @@
-#include <bits/types/struct_timeval.h>
 #include <ft_ping.h>
 
 t_ping      g_ping = {0};
@@ -45,9 +44,8 @@ int     main(int ac, char *av[]) {
     if (signal(SIGINT, signal_handler) == SIG_ERR)
         error_handle(-1, "Error while using signal");
 
-    t_list *link = g_ping.session;
-    while (link) {
-        t_sum           *session = link->content;
+    while (g_ping.session) {
+        t_sum           *session = g_ping.session->content;
         t_seq           *sequence = &(session->sequence);
         fd_set          sequence_set;
         struct timeval  timeout = {0};
@@ -118,6 +116,6 @@ int     main(int ac, char *av[]) {
             }
         }
         sequence_deinit(sequence);
-        link = session_end(&g_ping.session);
+        g_ping.session = session_end(&g_ping.session);
     }
 }

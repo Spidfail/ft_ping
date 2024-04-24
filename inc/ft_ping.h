@@ -205,6 +205,7 @@ void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
 void        session_print_sum(t_sum *session);
 void        session_deinit_hosts(t_list **hosts);
 t_list      *session_end(t_list **sessions);
+t_list      *session_clean(t_list **sessions);
 
 void        sequence_init(t_seq *sequence, const t_packet *to_send);
 void        sequence_deinit(t_seq *sequence);
