@@ -1,12 +1,12 @@
 #include <ft_ping.h>
 
 static bool     is_addr(char *addr) {
-    if (addr == NULL || addr[0] == '-')
+    if (addr == NULL)
         return false;
     return true;
 }
 
-void    host_lookup(char *raw_addr, t_host *host, bool do_resolution) {
+void    host_lookup(t_host *host, char *raw_addr, bool do_resolution) {
     struct  addrinfo hints = {0};
     int8_t  rtn_gai = 0;
 

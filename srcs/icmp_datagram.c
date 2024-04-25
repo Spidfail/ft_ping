@@ -1,47 +1,42 @@
 #include <ft_ping.h>
 
+uint16_t            ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size) {
+    uint16_t    checksum = 0;
+    // Allocating to be sure to get the right size.
+    char        *buff = ft_calloc(1, _ICMP_HDR_SIZE + size);
+
+    if (buff == NULL)
+        error_handle(0, "Failed to allocate data buffer");
+    // Fill the first part with the icmp header struct
+    ft_memcpy(buff, header, _ICMP_HDR_SIZE);
+    // Fill the rest with the data buffer
+    ft_memcpy(buff + _ICMP_HDR_SIZE, data, size);
+    checksum = packet_checksum_calculate(buff, size);
+    free(buff);
+    return checksum;
+}
+
 /// Allocate and fill the data pointer with the content of
 /// a `struct timeval` upon gettimeofday() call.
-static void        generate_data(char **data) {
-    if (*data == NULL)
-        return ;
-
+static void        ping_data_generate(char data[]) {
     struct timeval  time_of_day = {0};
 
     if (gettimeofday(&time_of_day, NULL) != 0)
         error_handle(0, "Error while recovering the time of day");
-    ft_memcpy(*data, &time_of_day, sizeof(struct timeval));
+    ft_memcpy(data, &time_of_day, sizeof(struct timeval));
 }
 
 /// Fill the header for an ECHO_REQUEST with sequence number equal to 1.
-static void        fill_header(struct icmphdr *header, char *data, size_t data_size, uint16_t seq_number) {
+static void        ping_fill_header_icmp(struct icmphdr *header, char *data, size_t data_size, uint16_t seq_number, uint16_t id) {
     header->type = ICMP_ECHO;
     header->code = 0;
     header->checksum = 0; // Making sure the checksum is not set
-    header->un.echo.id = getuid();
+    header->un.echo.id = id;
     header->un.echo.sequence = seq_number;
-    header->checksum = calculate_checksum_icmp(*header, data, data_size);
+    header->checksum = ping_datagram_checksum(header, data, data_size);
 }
 
-static void        fill_datagram(t_icmp *icmp_dtg) {
-    ft_memcpy(icmp_dtg->datagram, &icmp_dtg->header, _ICMP_HDR_SIZE);
-    ft_memcpy(icmp_dtg->datagram + _ICMP_HDR_SIZE, icmp_dtg->data, icmp_dtg->data_size);
-}
-
-static void    generate_datagram(t_icmp *echo_request, const t_sum *session) {
-    generate_data(&echo_request->data);
-    fill_header(&echo_request->header, echo_request->data, echo_request->data_size,
-                session->seq_number);
-    fill_datagram(echo_request);
-}
-
-int     send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session) {
-    ssize_t         rtn = 0;
-
-    generate_datagram(echo_request, session);
-    rtn = sendto(sockfd, echo_request->datagram, echo_request->datagram_size,
-                 0, dest->addr_info->ai_addr, dest->addr_info->ai_addrlen);
-    if (rtn == -1)
-        return -1;
-    return rtn;
+void                ping_datagram_generate(t_packet *packet, uint16_t seq_number, uint16_t id) {
+    ping_data_generate(packet->data);
+    ping_fill_header_icmp(&(packet->icmp_hdr), packet->data, _PING_DATA_SIZE, seq_number, id);
 }

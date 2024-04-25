@@ -1,4 +1,3 @@
-#include "ft_opt.h"
 #include <ft_ping.h>
 
 void     opt_fork_timeout(int scd) {
@@ -27,6 +26,17 @@ static int    opt_interface_handle(const char *raw_addr) {
         }
     }
     return rtn;
+}
+
+t_list      *opt_arg_add(t_list **list, char *arg) {
+    if (list == NULL)
+        return NULL;
+
+    t_list  *new = ft_lstnew(arg);
+    if (!new)
+        return NULL;
+    ft_lstadd_back(list, new);
+    return new;
 }
 
 // -h -v -c -i -f -l -n -w -W -p -r -s -T --ttl --ip-timestamp
@@ -171,8 +181,15 @@ error_t     opt_parsing(int key, char *arg, struct argp_state *state) {
             break;
 
         case ARGP_KEY_ARG:
-            option_data->arg_raw = arg;
+            if (opt_arg_add(&(option_data->args), arg) == NULL)
+                return -1;
             break;
+        
+        case ARGP_KEY_END:
+            if (ft_lstsize(option_data->args) < 1) {
+                fprintf(stderr, "%s %s\n", _ERROR_HEADER, "missing host operand");
+                argp_usage(state);
+            }
         default:
             return ARGP_ERR_UNKNOWN;
     }

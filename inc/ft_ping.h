@@ -47,30 +47,7 @@
 
 #define _ERROR_HEADER "ping:"
 #define _ERROR_RESOLVE "cannot resolve"
-/// OPT list : < -h -v -f -l -I -m -M -n -w -W -p -Q -S -t -T >
-/// Only the first two are mandatory
 #define _ERROR_USAGE "Destination address required"
-#define _HEADER_USAGE "Usage\n\
-    ping [options] <destination>\n\n\
-Options:\n\
-    <destination>      dns name or ip address\n\
-    -h                 print help and exit\n\
-    -v                 verbose output\n\
-    -f                 flood ping\n\
-    -l <preload>       send <preload> number of packages while waiting replies\n\
-    -I <interface>     either interface name or address\n\
-    -m <mark>          tag the packets going out\n\
-    -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>\n\
-    -n                 no dns name resolution\n\
-    -w <timeout>      reply wait <timeout> in seconds\n\
-    -W <timeout>       time to wait for response\n\
-    -p <pattern>       contents of padding byte\n\
-    -Q <tclass>        use quality of service <tclass> bits\n\
-    -S <size>          use <size> as SO_SNDBUF socket option value\n\
-    -t <ttl>           define time to live\n\
-IPv4 options:\n\
-    -T <timestamp>     define timestamp, can be one of <tsonly|tsandaddr|tsprespec>\n\
-"
 #define _ERROR_INTERFACE_SRCADDR "Warning: source address might be selected on device other than: "
 #define _ERROR_INTERFACE_IFACE "unknown iface: "
 #define _ERROR_INTERFACE_NOSUCHDEVICE "SO_BINDTODEVICE "
@@ -81,30 +58,59 @@ IPv4 options:\n\
     printf("%lu bytes from %s: icmp_seq=%i ttl=%i time=%f ms\n", \
     recv_size, ip_addr, seq, ttl, ms); \
 
+#define __PRINT_PACKET_ERROR(recv_size, ip_addr, error_description) \
+    printf("%lu bytes from %s: %s\n", \
+    recv_size, ip_addr, error_description); \
+
 #define __PRINT_HEADER_DATABYTE(name_can, name_ip, data_size, packet_size) \
-    printf("PING %s (%s) %lu(%lu) data bytes", \
+    printf("PING %s (%s): %lu(%lu) data bytes", \
     name_can, name_ip, data_size, packet_size); \
 
 #define __PRINT_HEADER_VERBOSE(indent) \
     printf(", id 0x%04x = %u", indent, indent);
 
 #define __PRINT_HEADER_BEG_IF(name_can, name_ip, data_size, packet_size, ip_local, interface) \
-    printf("PING %s (%s) from %s %s: %lu(%lu) data bytes", \
+    printf("PING %s (%s): from %s %s: %lu(%lu) data bytes", \
     name_can, name_ip,  ip_local, interface, data_size, packet_size); \
 
-#define __PRINT_SUM(name_canon, nb_sent, nb_recv, nb_errors, overall_time) \
-    write(1, "\n", 1); \
+#define __PRINT_SUM(name_canon, nb_sent, nb_recv, loss, nb_errors) \
     printf("--- %s ping statistics ---\n%i packets transmitted, %lu received, ", name_canon, nb_sent, nb_recv); \
     if (nb_errors != 0) \
         printf("+%lu errors, ", nb_errors); \
-    printf("%lu%% packet loss", ((nb_sent - nb_recv) / nb_sent) * 100); \
-    if (overall_time > 0) \
-        printf(", time %fms\n", overall_time); \
-    else \
-        printf("\n"); \
+    printf("%lu%% packet loss\n", loss);
     
-#define __PRINT_RTT(time_min, time_delta, time_max, recv_number) \
-    printf("rtt min/avg/max = %f/%f/%f\n", time_min, (time_delta/(double)recv_number), time_max);
+#define __PRINT_RTT(time_min, time_mean, time_max, recv_number, stddev) \
+    printf("round-trip min/avg/max/stddev = %f/%f/%f/%f\n", time_min, time_mean, time_max, stddev);
+
+/////////////////////// ERROR CODES
+
+typedef struct   s_recv_error_type_code {
+    int type;
+    int code;
+    char *description;
+}               t_recv_error;
+
+#define ICMP_ERROR_MAXNB 17
+static t_recv_error     g_icmp_error[18] = {
+    {ICMP_DEST_UNREACH, ICMP_NET_UNREACH, "Destination Net Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, "Destination Host Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_PROT_UNREACH, "Destination Protocol Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, "Destination Port Unreachable"},
+    {ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED, "Fragmentation needed and DF set"},
+    {ICMP_DEST_UNREACH, ICMP_SR_FAILED, "Source Route Failed"},
+    {ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN, "Network Unknown"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNKNOWN, "Host Unknown"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_ISOLATED, "Host Isolated"},
+    {ICMP_DEST_UNREACH, ICMP_NET_UNR_TOS, "Destination Network Unreachable At This TOS"},
+    {ICMP_DEST_UNREACH, ICMP_HOST_UNR_TOS, "Destination Host Unreachable At This TOS"},
+    {ICMP_REDIRECT, ICMP_REDIR_NET, "Redirect Network"},
+    {ICMP_REDIRECT, ICMP_REDIR_HOST, "Redirect Host"},
+    {ICMP_REDIRECT, ICMP_REDIR_NETTOS, "Redirect Type of Service and Network"},
+    {ICMP_REDIRECT, ICMP_REDIR_HOSTTOS, "Redirect Type of Service and Host"},
+    {ICMP_TIME_EXCEEDED, ICMP_EXC_TTL, "Time to live exceeded"},
+    {ICMP_TIME_EXCEEDED, ICMP_EXC_FRAGTIME, "Frag reassembly time exceeded"},
+    { 0 }
+};
 
 /////////////////////// Typedef
 typedef uint    ifa_flag_t;
@@ -112,6 +118,20 @@ typedef uint    ifa_flag_t;
 
 
 /////////////////////// Structs
+///
+
+typedef union   u_interfaces_id {
+    const char            *name_str;
+    struct sockaddr       *address;
+    struct sockaddr       *mask;
+}               t_ifid;
+
+typedef enum   e_interface_enum {
+    _IFE_NAME,
+    _IFE_ADDR,
+    _IFE_MASK
+}               t_ife;
+
 typedef struct  s_recv_buff {
     struct msghdr       header;
     char                *buffer;
@@ -131,109 +151,89 @@ typedef struct  s_host {
     char                addr_str[INET_ADDRSTRLEN];
 }               t_host;
 
-typedef union   u_interfaces_id {
-    const char            *name_str;
-    struct sockaddr       *address;
-    struct sockaddr       *mask;
-}               t_ifid;
+typedef struct  s_sequence_sum {
+    t_packet            send;
+    t_packet            recv;
+    t_host              sender;
+    ssize_t             recv_size;
+    double              time_enlapsed_ms;
+}               t_seq;
 
-typedef enum   e_interface_enum {
-    _IFE_NAME,
-    _IFE_ADDR,
-    _IFE_MASK
-}               t_ife;
-
-typedef struct  s_icmp {
-    struct icmphdr  header;
-    char            *data;
-    size_t          data_size;
-    char            *datagram;
-    size_t          datagram_size;
-    t_packet        *packet;
-    size_t          packet_size;
-    ssize_t         received_size;
-    bool            is_packet;
-    uint16_t         ident;
-}               t_icmp;
-
-typedef struct  s_session_sum {
-    uint16_t        seq_number;
-    size_t          recv_number;
-    size_t          err_number;
-    double          time_delta;
+struct s_time_metrics {
     double          time_min;
     double          time_max;
-    double          time_enlapsed;
-    struct timeval  time_end;
+    t_list          *rtt;
     struct timeval  time_start;
+    struct timeval  time_end;
+};
+
+typedef struct  s_session_sum {
+    bool                    active;
+    t_host                  dest;
+    t_packet                packet;
+    t_seq                   sequence;
+    int                     sockfd;
+    uint16_t                pid;
+    size_t                  recv_number;
+    size_t                  err_number;
+    uint16_t                seq_number;
+    struct s_time_metrics   time;
 }               t_sum;
 
-typedef struct  s_global_data {
-    t_icmp          echo_request;
-    t_host          dest_spec;
-    t_sum           session;
-    int             sockfd;
-    t_arg_d         args;
-}               t_global;
+typedef struct  s_ping {
+    t_arg_d     args;
+    t_list      *session;
+    uint16_t    pid;
+}               t_ping;
 
-/////    
-/////////////////////// Global Variables
-extern t_global    g_data;
 
-// ICMP_CHECKSUM
-uint16_t    calculate_checksum_icmp(struct icmphdr header, const char *data, size_t size);
-uint16_t    calculate_checksum(const char *buffer, size_t size);
+extern t_ping   g_ping;
+extern bool     g_stop;
 
-// ERROR_HANDLING
-int         error_handle(int errnum, char *err_value);
-void        error_gai_handle(char *input, int8_t ec);
 
-// HOST
-void        host_lookup(char *raw_addr, t_host *host, bool do_resolution);
+int     error_handle(int errnum, char *err_value);
+void    error_gai_handle(char *input, int8_t ec);
+char    *error_icmp_mapping(int type, int code);
+
+int     interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
+int     interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
+
+t_sum       *session_new(uint16_t pid, int sockfd, char *raw_addr, void (*datagram_generate)(t_packet *, uint16_t, uint16_t));
+t_list      *session_init_all(uint16_t pid, const t_list *hosts);
+void        session_time_update(t_sum *session, double enlapsed);
+void        session_print_begin(const t_sum *session, t_arg_d* const arg_data);
+void        session_print_sum(t_sum *session);
+void        session_deinit_hosts(t_list **hosts);
+t_list      *session_end(t_list **sessions);
+t_list      *session_clean(t_list **sessions);
+
+void        sequence_init(t_seq *sequence, const t_packet *to_send);
+void        sequence_deinit(t_seq *sequence);
+void        sequence_clean(t_seq *sequence);
+
+int         packet_send(int sockfd, const t_host *dest, const t_packet *packet);
+int         packet_receive(int sockfd, t_seq *sequence);
+void        packet_print(const t_seq *sequence, bool verbose);
+uint16_t    packet_checksum_calculate(const char *buffer, size_t size);
+int         packet_verify_headers(const t_seq *sequence, uint8_t type, uint8_t code);
+void        packet_copy(t_packet *target, const t_packet *source);
+void        packet_modify_sequence_number(t_packet *packet, uint16_t seq_num);
+void        packet_modify_data(t_packet *packet, const char *data, size_t size);
+void        packet_update_timestamp(t_packet *packet);
+
+void        host_lookup(t_host *host, char *raw_addr, bool do_resolution);
 void        host_get_ip(struct sockaddr *addr_buff);
 
-// INTERFACE
-int         interface_lookup(struct sockaddr_in *addr, const char *raw_addr, uint16_t port);
-int         interface_id(ifa_flag_t *flag, t_ifid target, t_ife type);
+void        ping_datagram_generate(t_packet *packet, uint16_t seq_number, uint16_t id);
+uint16_t    ping_datagram_checksum(struct icmphdr *header, const char *data, size_t size);
 
-// VERIFY
-int         verify_ip_header(const struct ip *reception);
-int         verify_icmp_header(const t_packet *packet, const t_icmp *src);
+double      timer_enlapsed_ms(const t_packet *packet);
+void        timer_set_timeout(struct timeval *timeout, time_t value, bool flood);
+void        timer_get(struct timeval *timer);
 
-// RECEIVE
-int         receive_data(int sockfd, t_icmp *echo_request, t_sum *session);
+int     socket_init(int domain, int type, int protocol, const t_arg_d *arg_data);
 
-// ICMP_DATAGRAM
-int         send_new_packet(int sockfd, t_icmp *echo_request, t_host *dest, const t_sum *session);
+void    interrupt(int exit_nb);
 
-// PRINT
-void        print_packet(const t_icmp *echo_request, const t_sum *session);
-void        print_packet_error(const t_icmp *echo_request, uint8_t et, uint8_t ec);
-void        print_header_begin(int sockfd, const t_host *dest, const t_icmp *request, t_arg_d* const arg_data);
-void        print_sum(t_sum *sumup, t_host *dest);
-
-// DATA
-void        init_data(t_icmp *echo_request, t_sum *session);
-void        clean_data(t_icmp *echo_request);
-void        free_data(t_icmp *echo_request);
-
-// SIGNAL HANDLER
-void        signal_handler(int sig);
-void        handle_tick();
-void        new_load();
-void        end_session(t_sum *session, t_host *dest);
-void        interrupt(int exit_nb);
-
-// TIME
-double      get_enlapsed_ms(const struct timeval *start, const struct timeval *end);
-void        update_time(t_sum *session, const struct timeval *start, const struct timeval *end);
-
-
-// SOCKET
-void            socket_init(int *sockfd, t_arg_d *arg_data);
-
-// LOOP
-void            loop_flood();
-void            loop_classic();
 
 #endif // FT_PING_H ///////////////////////////////////////////////////////////

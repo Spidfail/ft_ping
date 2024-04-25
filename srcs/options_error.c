@@ -1,7 +1,4 @@
-#include "ft_opt.h"
 #include <ft_ping.h>
-#include <net/if.h>
-#include <stdio.h>
 
 static void     _opt_error_interface(char *arg) {
     int len = (sizeof(_ERROR_HEADER) * 2) + sizeof(' ') // 'ping: '
@@ -27,16 +24,20 @@ static void     _opt_error_interface(char *arg) {
 void    opt_error_handle(t_opt_err errnum, char *arg, int exnum) {
     switch (errnum) {
         case OPT_ERR_INVALID:
-            fprintf(stderr, "invalid value (`%s' near `%s')", arg, arg);
+            fprintf(stderr, "invalid value (`%s' near `%s')\n", arg, arg);
             break;
         case OPT_ERR_IFA:
             _opt_error_interface(arg);
+            break;
         case OPT_ERR_TOOSMALL:
-            fprintf(stderr, "option value too small: %i", ft_atoi(arg));
+            fprintf(stderr, "option value too small: %i\n", ft_atoi(arg));
+            break;
         case OPT_ERR_TOOBIG:
-            fprintf(stderr, "option value too big: %i", ft_atoi(arg));
+            fprintf(stderr, "option value too big: %i\n", ft_atoi(arg));
+            break;
         case OPT_ERR_PATTERN:
-            fprintf(stderr, "error in pattern near %s", arg);
+            fprintf(stderr, "error in pattern near %s\n", arg);
+            break;
         default:
             break;
     }    

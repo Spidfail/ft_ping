@@ -9,28 +9,25 @@ OBJ_DIR := objs
 SRC_DIR := srcs
 INC_DIR := inc
 
-CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) -fsanitize=address #-g3   
-LDFLAGS := -L$(LIBFT_DIR) -fsanitize=address 
-LDLIBS := -lft
+CFLAGS := -Wall -Wextra -Werror -I$(LIBFT_DIR) -I$(INC_DIR) -gdwarf-4 #-fsanitize=address      
+LDFLAGS := -L$(LIBFT_DIR) #-fsanitize=address
+LDLIBS := -lft -lm
 
 
 SRCS := ft_ping.c \
-	icmp_datagram.c \
-	icmp_checksum.c \
 	error_handling.c \
-	verify_header.c \
-	receive.c \
-	print.c \
-	data.c \
-	signal_handler.c \
-	get_time.c \
-	host.c \
+	interface.c \
 	options.c \
 	options_check.c \
 	options_error.c \
+	session.c \
+	sequence.c \
+	host.c \
 	socket.c \
-	loop.c \
-	interface.c
+	icmp_datagram.c \
+	packet.c \
+	time.c
+
 OBJS := $(SRCS:%.c=%.o)
 
 SRC_PATH := $(addprefix $(SRC_DIR)/,$(SRCS))
